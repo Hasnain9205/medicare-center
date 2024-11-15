@@ -1,13 +1,23 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../provider/AuthProvider";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import AddDoctor from "./adminDashboard/AddDoctor";
 import AllDoctor from "./adminDashboard/AllDoctor";
-import Settings from "./settings/Settings";
+import AdminDashboard from "./adminDashboard/AdminDashboard";
+import AdminGetAllTest from "./adminDashboard/AdminGetAllTest";
+import { AddTest } from "./adminDashboard/AddTest";
 
 export default function Dashboard() {
-  const { user } = useContext(AuthContext);
+  const { user, loading } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState("");
+  console.log("user", user);
+
+  useEffect(() => {
+    if (!loading && !user.role === "admin") {
+      navigate("/login");
+    }
+  }, [user, navigate, loading]);
 
   const renderContent = () => {
     switch (currentPage) {
@@ -15,28 +25,33 @@ export default function Dashboard() {
         return <AddDoctor />;
       case "allDoctors":
         return <AllDoctor />;
-      case "settings":
-        return <Settings />;
-      default:
-        return <div>Select an option from the menu.</div>;
+      case "adminDashboard":
+        return <AdminDashboard />;
+      case "addTest":
+        return <AddTest />;
+      case "adminGetAllTest":
+        return <AdminGetAllTest />;
     }
   };
+  if (loading) {
+    return <div>Loading.....</div>;
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="flex">
       <aside className="flex flex-col w-64 h-screen px-4 py-8 overflow-y-auto bg-white border-r rtl:border-r-0 rtl:border-l dark:bg-gray-900 dark:border-gray-700">
         <a href="#" className="mx-auto">
-          <img
-            className="w-auto h-6 sm:h-7"
-            src="https://merakiui.com/images/full-logo.svg"
-            alt="Logo"
-          />
+          <h1 className="w-auto h-6 sm:h-7">{user.role}</h1>
         </a>
 
         <div className="flex flex-col items-center mt-6 -mx-2">
           <img
             className="object-cover w-24 h-24 mx-2 rounded-full"
-            src={user?.profileImage || "path/to/default/image.png"} // Default image path
+            src={user?.profileImage || "path/to/default/image.png"}
             alt="Profile"
           />
           <h4 className="mx-2 mt-2 font-medium text-gray-800 dark:text-gray-200">
@@ -51,8 +66,8 @@ export default function Dashboard() {
           <nav>
             <Link
               to="#"
-              onClick={() => setCurrentPage("")}
-              className="flex items-center px-4 py-2 text-gray-700 bg-gray-100 rounded-lg dark:bg-gray-800 dark:text-gray-200"
+              onClick={() => setCurrentPage("adminDashboard")}
+              className="flex items-center px-4 py-2 mt-5 text-gray-600 transition-colors duration-300 transform rounded-lg dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 hover:text-gray-700"
             >
               <span className="mx-4 font-medium">Admin Dashboard</span>
             </Link>
@@ -72,21 +87,32 @@ export default function Dashboard() {
             >
               <span className="mx-4 font-medium">All Doctors</span>
             </Link>
-
             <Link
               to="#"
-              onClick={() => setCurrentPage("settings")}
+              onClick={() => setCurrentPage("addTest")}
               className="flex items-center px-4 py-2 mt-5 text-gray-600 transition-colors duration-300 transform rounded-lg dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 hover:text-gray-700"
             >
-              <span className="mx-4 font-medium">Settings</span>
+              <span className="mx-4 font-medium">Add Test</span>
+            </Link>
+            <Link
+              to="#"
+              onClick={() => setCurrentPage("adminGetAllTest")}
+              className="flex items-center px-4 py-2 mt-5 text-gray-600 transition-colors duration-300 transform rounded-lg dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 hover:text-gray-700"
+            >
+              <span className="mx-4 font-medium">All Test</span>
+            </Link>
+            <Link
+              to="#"
+              onClick={() => setCurrentPage("allDoctors")}
+              className="flex items-center px-4 py-2 mt-5 text-gray-600 transition-colors duration-300 transform rounded-lg dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 hover:text-gray-700"
+            >
+              <span className="mx-4 font-medium">All Appointment</span>
             </Link>
           </nav>
         </div>
       </aside>
 
-      <main className="flex-1 p-6">
-        {renderContent()} {/* Render the appropriate content based on state */}
-      </main>
+      <main className="flex-1 p-6">{renderContent()}</main>
     </div>
   );
 }

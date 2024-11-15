@@ -18,7 +18,11 @@ testRouter.post(
   createTest
 );
 testRouter.get("/get-all-test", getAllTest);
-testRouter.get("/test-by-id/:id", authenticationRole(["user"]), getTestById);
+testRouter.get(
+  "/test-by-id/:id",
+  authenticationRole(["user", "admin"]),
+  getTestById
+);
 testRouter.put("/update-test/:id", authenticationRole(["admin"]), updateTest);
 testRouter.delete(
   "/delete-test/:id",

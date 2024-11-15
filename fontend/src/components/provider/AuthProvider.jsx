@@ -13,7 +13,7 @@ export const AuthContext = createContext();
 
 export const AuthProvider = (props) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [loggedOut, setLoggedOut] = useState(false);
   const navigate = useNavigate();
 
@@ -34,8 +34,14 @@ export const AuthProvider = (props) => {
   };
 
   const getProfile = async () => {
+    const token = getAccessToken();
+    if (!token) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+
     try {
-      const token = getAccessToken();
       const { data } = await useAxios.get("/users/profile", {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -45,31 +51,19 @@ export const AuthProvider = (props) => {
       console.log("User data:", data.user);
     } catch (error) {
       console.error("Error fetching user profile:", error);
+      setUser(null);
       removeAccessToken();
       removeRefreshToken();
-      setUser(null);
+      localStorage.removeItem("userId");
       navigate("/login");
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    init();
+    getProfile();
   }, []);
-
-  const init = async () => {
-    const token = getAccessToken();
-    if (token) {
-      const data = getProfile();
-      if (data) {
-        setUser(data.user);
-      } else {
-        setUser(null);
-        removeAccessToken();
-        removeRefreshToken();
-        loggedOut();
-      }
-    }
-  };
 
   // Logout function
   const logout = () => {
@@ -78,8 +72,8 @@ export const AuthProvider = (props) => {
     removeRefreshToken();
     setUser(null);
     setLoggedOut(true);
-    setLoading(false);
     localStorage.removeItem("userId");
+    setLoading(false);
     navigate("/login");
   };
 
@@ -88,6 +82,8 @@ export const AuthProvider = (props) => {
     login,
     logout,
     loading,
+    setUser,
+    loggedOut,
   };
 
   return (

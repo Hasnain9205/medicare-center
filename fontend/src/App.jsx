@@ -9,16 +9,19 @@ import Register from "./pages/registerPage/Register";
 import PrivateRoute from "./components/privateRoute/PrivateRoute";
 import MyProfile from "./pages/myProfilePage/MyProfile";
 import Dashboard from "./components/dashboard/Dashboard";
-import AdminDashboard from "./components/dashboard/adminDashboard/AdminDashboard";
 import AddDoctor from "./components/dashboard/adminDashboard/AddDoctor";
 import AllDoctor from "./components/dashboard/adminDashboard/AllDoctor";
 import Footer from "./pages/Footer/Footer";
 import MyAppointments from "./pages/myProfilePage/MyAppointments";
 import MyAppointment from "./pages/appointments/MyAppointment";
-import DoctorsDetails from "./components/topDoctors/DoctorsDetails";
 import TestDetails from "./components/Test/TestDetails";
 import NotFound from "./components/notFound/NotFound";
 import Doctors from "./components/departments/Doctors";
+import Appointments from "./components/topDoctors/Appointments";
+import MyTestList from "./components/Test/MyTestList";
+import AdminDashboard from "./components/dashboard/adminDashboard/AdminDashboard";
+import { AddTest } from "./components/dashboard/adminDashboard/AddTest";
+import AdminGetAllTest from "./components/dashboard/adminDashboard/AdminGetAllTest";
 
 function App() {
   return (
@@ -36,8 +39,9 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/myProfile" element={<MyProfile />} />
           <Route path="/myAppointments" element={<MyAppointments />} />
-          <Route path="/doctorDetails/:doctorId" element={<DoctorsDetails />} />
+          <Route path="/appointments/:doctorId" element={<Appointments />} />
           <Route path="/testDetails/:testId" element={<TestDetails />} />
+          <Route path="/myTestsList" element={<MyTestList />} />
 
           {/* Protected routes for dashboard */}
           <Route
@@ -51,6 +55,8 @@ function App() {
             <Route path="adminDashboard" element={<AdminDashboard />} />
             <Route path="addDoctor" element={<AddDoctor />} />
             <Route path="allDoctor" element={<AllDoctor />} />
+            <Route path="addTest" element={<AddTest />} />
+            <Route path="adminGetAllTest" element={<AdminGetAllTest />} />
           </Route>
 
           <Route path="/myAppointment" element={<MyAppointment />} />

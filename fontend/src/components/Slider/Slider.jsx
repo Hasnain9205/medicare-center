@@ -1,7 +1,6 @@
 import slides from "./import";
 import { useRef } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
-
 import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/navigation";
@@ -17,6 +16,17 @@ export default function Slider() {
       progressContent.current.textContent = `${Math.ceil(time / 1000)}s`;
     }
   };
+
+  // Function to handle smooth scroll to the target section
+  const handleScroll = (event, link) => {
+    event.preventDefault();
+    const targetId = link.replace("#", "");
+    const targetElement = document.getElementById(targetId);
+    if (targetElement) {
+      targetElement.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
     <>
       <Swiper
@@ -36,15 +46,18 @@ export default function Slider() {
       >
         {slides.map((slide) => (
           <SwiperSlide key={slide.id}>
-            <img className="w-full  h-96" src={slide.image} alt={slide.title} />
+            <img className="w-full h-96" src={slide.image} alt={slide.title} />
             <div
               className="autoplay-progress absolute inset-0 bg-black bg-opacity-50 flex flex-col justify-center items-center text-white"
               slot="container-end"
             >
               <h1 className="font-bold text-3xl text-center">{slide.title}</h1>
               <p className="w-[480px] text-center mt-4">{slide.description}</p>
-              <a href={slide.buttonLink}>
-                <button className="btn  bg-[#47ccc8] hover:bg-blue-950 hover:text-white mt-4">
+              <a
+                href={slide.buttonLink}
+                onClick={(e) => handleScroll(e, slide.buttonLink)}
+              >
+                <button className="btn bg-[#47ccc8] hover:bg-blue-950 hover:text-white mt-4">
                   {slide.buttonLabel}
                 </button>
               </a>

@@ -5,6 +5,7 @@ const appointmentModel = require("../models/appointmentModel");
 const userModel = require("../models/userModel");
 const cloudinary = require("cloudinary").v2;
 
+// Add doctor API
 exports.addDoctor = async (req, res) => {
   try {
     const {
@@ -17,13 +18,14 @@ exports.addDoctor = async (req, res) => {
       about,
       fees,
       address,
+      image,
+      availableSlots, // Array of available slots (slotDate and slotTime)
     } = req.body;
 
-    const imageFile = req.file;
-    console.log("Uploaded Image File: ", imageFile);
-
-    if (!imageFile) {
-      return res.json({ success: false, message: "Image file is required" });
+    if (!image) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Image URL is required" });
     }
 
     if (
@@ -37,18 +39,20 @@ exports.addDoctor = async (req, res) => {
       !fees ||
       !address
     ) {
-      return res.json({ success: false, message: "All fields are required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "All fields are required" });
     }
 
     if (!validator.isEmail(email)) {
-      return res.json({
+      return res.status(400).json({
         success: false,
         message: "Please enter a valid email",
       });
     }
 
     if (password.length < 8) {
-      return res.json({
+      return res.status(400).json({
         success: false,
         message: "Password must be at least 8 characters",
       });
@@ -56,21 +60,6 @@ exports.addDoctor = async (req, res) => {
 
     const salt = await bcrypt.genSalt(10);
     const hashPass = await bcrypt.hash(password, salt);
-
-    let imageUrl = "";
-
-    if (imageFile) {
-      const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
-        resource_type: "image",
-      });
-
-      if (imageUpload && imageUpload.secure_url) {
-        imageUrl = imageUpload.secure_url;
-      } else {
-        return res.json({ success: false, message: "Image upload failed" });
-      }
-    }
-
     const doctorData = {
       name,
       email,
@@ -80,18 +69,40 @@ exports.addDoctor = async (req, res) => {
       experience,
       about,
       fees,
-      address: address,
-      image: imageUrl,
+      address,
+      image,
       date: Date.now(),
+      slots_booked: [], // Initialize with an empty array
     };
 
+    // Save doctor data
     const newDoctor = new doctorModel(doctorData);
     await newDoctor.save();
 
-    res.json({ success: true, message: "Doctor details added successfully" });
+    // Now add available slots for the doctor if provided
+    if (availableSlots && availableSlots.length > 0) {
+      // Add slots to the doctor document
+      const slots = availableSlots.map((slot) => ({
+        slotDate: slot.slotDate,
+        slotTime: slot.slotTime,
+        booked: false, // Initially, all slots are unbooked
+      }));
+
+      // Update the doctor's slots_booked field
+      newDoctor.slots_booked = [...newDoctor.slots_booked, ...slots];
+      await newDoctor.save();
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "Doctor details added successfully along with slots",
+      newDoctor,
+    });
   } catch (error) {
     console.error(error);
-    return res.json({ success: false, message: error.message });
+    return res
+      .status(500)
+      .json({ success: false, message: "An error occurred, please try again" });
   }
 };
 
@@ -106,6 +117,139 @@ exports.allDoctor = async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.json({ success: false, message: error.message });
+  }
+};
+
+//update doctor api
+exports.updateDoctor = async (req, res) => {
+  try {
+    const {
+      doctorId,
+      name,
+      email,
+      password,
+      speciality,
+      degree,
+      experience,
+      about,
+      fees,
+      address,
+    } = req.body;
+
+    const imageFile = req.file; // Assume multer is being used for handling file uploads
+
+    // Validate required fields
+    if (
+      !doctorId ||
+      !name ||
+      !email ||
+      !speciality ||
+      !degree ||
+      !experience ||
+      !about ||
+      !fees ||
+      !address
+    ) {
+      return res.json({ success: false, message: "All fields are required" });
+    }
+
+    // Validate email format
+    if (!validator.isEmail(email)) {
+      return res.json({
+        success: false,
+        message: "Please enter a valid email",
+      });
+    }
+
+    // Prepare updated data
+    const updateData = {
+      name,
+      email,
+      speciality,
+      degree,
+      experience,
+      about,
+      fees,
+      address,
+    };
+
+    // Hash password if updated
+    if (password) {
+      if (password.length < 8) {
+        return res.json({
+          success: false,
+          message: "Password must be at least 8 characters",
+        });
+      }
+      const salt = await bcrypt.genSalt(10);
+      updateData.password = await bcrypt.hash(password, salt);
+    }
+
+    // Image upload handling
+    if (imageFile) {
+      const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
+        resource_type: "image",
+      });
+
+      if (imageUpload && imageUpload.secure_url) {
+        updateData.image = imageUpload.secure_url;
+      } else {
+        return res.json({ success: false, message: "Image upload failed" });
+      }
+    }
+
+    // Update doctor in database
+    const updatedDoctor = await doctorModel.findByIdAndUpdate(
+      doctorId,
+      updateData,
+      { new: true }
+    );
+
+    if (!updatedDoctor) {
+      return res.json({
+        success: false,
+        message: "Doctor not found or update failed",
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "Doctor details updated successfully",
+      doctor: updatedDoctor,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+//delete doctor api
+// Delete doctor API
+exports.deleteDoctor = async (req, res) => {
+  try {
+    const { doctorId } = req.params;
+
+    // Check if doctor exists
+    const doctor = await doctorModel.findById(doctorId);
+    if (!doctor) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Doctor not found" });
+    }
+
+    // Delete the doctor
+    await doctorModel.findByIdAndDelete(doctorId);
+
+    // Optionally, delete doctor's associated appointments (if needed)
+    await appointmentModel.deleteMany({ docId: doctorId });
+
+    // Return response
+    return res
+      .status(200)
+      .json({ success: true, message: "Doctor deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 

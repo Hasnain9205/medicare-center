@@ -6,6 +6,8 @@ const {
   appointmentsAdmin,
   appointmentCancelAdmin,
   adminDashboard,
+  updateDoctor,
+  deleteDoctor,
 } = require("../controllers/adminController");
 const { authenticationRole } = require("../middlewares/authenticationRole");
 
@@ -18,6 +20,16 @@ adminRouter.post(
   addDoctor
 );
 adminRouter.get("/doctors", authenticationRole(["admin"]), allDoctor);
+adminRouter.put(
+  "/update-doctor/:id",
+  authenticationRole(["admin"]),
+  updateDoctor
+);
+adminRouter.delete(
+  "/delete-doctor/:id",
+  authenticationRole(["admin"]),
+  deleteDoctor
+);
 adminRouter.get(
   "/all-appointment",
   authenticationRole(["admin"]),

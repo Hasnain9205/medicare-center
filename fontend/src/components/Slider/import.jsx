@@ -20,7 +20,7 @@ const slides = [
     description:
       "Our state-of-the-art CT scanning technology ensures accurate diagnostics for better treatment.",
     buttonLabel: "24/7 CT Scan Services",
-    buttonLink: "#ctscan",
+    buttonLink: "#testServices",
   },
   {
     id: "item3",
@@ -29,7 +29,7 @@ const slides = [
     description:
       "We provide high-resolution X-ray imaging for detailed analysis and quicker diagnosis.",
     buttonLabel: "Get an X-Ray Now",
-    buttonLink: "#xray",
+    buttonLink: "#testServices",
   },
   {
     id: "item4",
@@ -38,7 +38,7 @@ const slides = [
     description:
       "Our pathology team delivers precise lab results, essential for effective treatment planning.",
     buttonLabel: "Explore Pathology Services",
-    buttonLink: "#pathology",
+    buttonLink: "#testServices",
   },
 ];
 

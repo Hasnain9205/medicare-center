@@ -23,58 +23,65 @@ export default function TestDetails() {
     fetchTestDetails();
   }, [testId]);
 
-  // Handle adding the test to the selected list
   const handleSelectTest = () => {
     if (test) {
       let selectedTests =
         JSON.parse(localStorage.getItem("selectedTests")) || [];
+      if (selectedTests.some((selectedTest) => selectedTest._id === test._id)) {
+        alert(`${test.name} is already selected.`);
+        return;
+      }
       selectedTests.push(test);
       localStorage.setItem("selectedTests", JSON.stringify(selectedTests));
       alert(`${test.name} has been added to your selected tests.`);
     }
   };
 
+  const selectedTests = JSON.parse(localStorage.getItem("selectedTests")) || [];
+  const isTestSelected = selectedTests.some(
+    (selectedTest) => selectedTest._id === testId
+  );
+
   return (
-    <div className="flex flex-col items-center mt-20">
+    <div className="items-center mt-20 container mx-auto">
       {test ? (
         <>
-          <h1 className="text-3xl font-bold mb-4">{test.name}</h1>
-          <img
-            src={test.image}
-            alt={test.name}
-            className="w-96 h-48 object-cover mb-4"
-          />
-          <p className="text-lg text-gray-600 mb-4">{test.description}</p>
-          <p className="text-xl font-semibold text-green-600 mb-4">
-            Price: {test.price}
-          </p>
-          <p className="text-lg font-semibold text-gray-700 mb-4">
-            Category: {test.category}
-          </p>
-          <p className="text-lg font-semibold text-gray-700 mb-4">
-            Test Duration: {test.duration} mins
-          </p>
-          <p className="text-lg font-semibold text-gray-700 mb-4">
-            Available Slots: {test.availableSlots} slots
-          </p>
-
-          {/* Additional Test Details */}
-          {test.instructions && (
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold">Instructions:</h3>
-              <p className="text-gray-700">{test.instructions}</p>
+          <div className="flex flex-col md:flex-row gap-10 bg-white shadow-md rounded-lg p-8 transition-all duration-200 transform hover:shadow-lg hover:scale-105">
+            <div className="md:w-1/3">
+              <img
+                src={test.image}
+                alt={test.name}
+                className="w-full h-64 object-cover rounded-md shadow-md"
+              />
             </div>
-          )}
+            <div className="md:w-2/3">
+              <h1 className="text-3xl font-bold text-blue-900 mb-2">
+                {test.name}
+              </h1>
+              <p className="text-gray-700 text-lg mb-4">{test.description}</p>
+              <p className="text-lg font-medium text-teal-700 mb-4">
+                Category: <span className="font-semibold">{test.category}</span>
+              </p>
+              <p className="text-2xl font-semibold text-green-600 mb-10">
+                Price: {test.price} Taka
+              </p>
 
-          <button
-            onClick={handleSelectTest}
-            className="bg-blue-900 text-white hover:bg-[#47ccc8] hover:text-blue-950 transition duration-200 font-semibold px-6 py-3 rounded-full flex items-center justify-center gap-2 mx-auto"
-          >
-            Book Test
-          </button>
+              <button
+                onClick={handleSelectTest}
+                disabled={isTestSelected}
+                className={`${
+                  isTestSelected
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-teal-600 hover:bg-blue-900 hover:text-teal-100"
+                } text-white font-semibold py-3 px-8 rounded-lg shadow-lg transition-all duration-200`}
+              >
+                {isTestSelected ? "Test Already Selected" : "Book Test"}
+              </button>
+            </div>
+          </div>
         </>
       ) : (
-        <p>Loading test details...</p>
+        <p className="text-gray-500">Loading test details...</p>
       )}
     </div>
   );

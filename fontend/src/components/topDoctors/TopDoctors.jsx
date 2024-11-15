@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import useAxios from "../../Hook/useAxios";
-import { Link, useNavigate } from "react-router-dom";
+import { getAccessToken } from "../../../Utils";
+import { useNavigate } from "react-router-dom";
 
 export default function TopDoctors() {
   const [doctors, setDoctors] = useState([]);
@@ -18,6 +19,15 @@ export default function TopDoctors() {
     };
     Doctor();
   }, []);
+
+  const handleBookDoctor = (doctorId) => {
+    const token = getAccessToken();
+    if (!token) {
+      navigate("/login");
+    } else {
+      navigate(`appointments/${doctorId}`);
+    }
+  };
 
   return (
     <div className="mt-20">
@@ -57,12 +67,12 @@ export default function TopDoctors() {
               <p>{doctor.speciality}</p>
 
               <div className="card-actions justify-end">
-                <Link
-                  to={`/doctorDetails/${doctor._id}`}
+                <button
+                  onClick={() => handleBookDoctor(doctor._id)}
                   className="btn bg-[#47ccc8] hover:bg-blue-950 hover:text-white  w-full"
                 >
-                  Doctor Details
-                </Link>
+                  Book Appointment
+                </button>
               </div>
             </div>
           </div>
