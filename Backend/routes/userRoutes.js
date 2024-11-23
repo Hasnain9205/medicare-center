@@ -5,11 +5,9 @@ const {
   getUserProfile,
   updateUserProfile,
   bookAppointment,
-  listAppointment,
   cancelAppointment,
-  paymentAppointment,
-  confirmPayment,
   updateRole,
+  getAppointment,
 } = require("../controllers/userController");
 const { authenticationRole } = require("../middlewares/authenticationRole");
 const upload = require("../middlewares/multer");
@@ -25,19 +23,24 @@ userRouter.get(
 );
 userRouter.put(
   "/update-profile",
-  authenticationRole(["user", "admin"]),
-  upload.single("image"),
+  authenticationRole(["user", "admin", "doctor"]),
   updateUserProfile
 );
-userRouter.post("/book-appointment", bookAppointment);
+userRouter.post(
+  "/book-appointment",
+  authenticationRole(["user"]),
+  bookAppointment
+);
 userRouter.get(
   "/appointments",
   authenticationRole(["user", "admin"]),
-  listAppointment
+  getAppointment
 );
-userRouter.post("/cancelled", cancelAppointment);
-userRouter.post("/payment", paymentAppointment);
-userRouter.post("/confirm-payment/:appointmentId", confirmPayment);
+userRouter.delete(
+  "/appointments/:id",
+  authenticationRole(["user"]),
+  cancelAppointment
+);
 userRouter.put("/user-role/:userId", authenticationRole(["admin"]), updateRole);
 
 module.exports = userRouter;

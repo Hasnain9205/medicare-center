@@ -35,7 +35,8 @@ export default function Doctors() {
     if (!token) {
       navigate("/login");
     } else {
-      navigate(`appointments/${doctorId}`);
+      console.log("Navigating to appointments for doctor:", doctorId);
+      navigate(`/appointments/${doctorId}`, { replace: true });
     }
   };
 

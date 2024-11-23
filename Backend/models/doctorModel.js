@@ -14,19 +14,17 @@ const doctorSchema = new mongoose.Schema(
     fees: { type: Number, required: true },
     address: { type: Object, required: true },
     date: { type: Number, required: true },
-    slots_booked: {
-      type: [
-        {
-          slotDate: { type: String, required: true },
-          slotTime: { type: String, required: true },
-          booked: { type: Boolean, default: false },
-        },
-      ],
-      default: [],
-    },
+    maxSlots: { type: Number, default: 20 },
+    slots_booked: [
+      {
+        slotDate: { type: Date },
+        slotTime: { type: String },
+        booked: { type: Boolean, default: false },
+      },
+    ],
   },
   { minimize: false }
 );
 
 module.exports =
-  mongoose.models.doctor || mongoose.model("doctor", doctorSchema);
+  mongoose.models.Doctor || mongoose.model("Doctor", doctorSchema);

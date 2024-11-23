@@ -11,13 +11,19 @@ export default function Dashboard() {
   const { user, loading } = useContext(AuthContext);
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState("");
-  console.log("user", user);
 
+  // Check if user is authenticated and has the role of 'admin'
   useEffect(() => {
-    if (!loading && !user.role === "admin") {
-      navigate("/login");
+    if (!loading) {
+      if (!user) {
+        navigate("/login");
+      } else if (user.role !== "admin") {
+        navigate("/login");
+      } else {
+        navigate("/dashboard");
+      }
     }
-  }, [user, navigate, loading]);
+  }, [user, loading, navigate]);
 
   const renderContent = () => {
     switch (currentPage) {
@@ -31,8 +37,13 @@ export default function Dashboard() {
         return <AddTest />;
       case "adminGetAllTest":
         return <AdminGetAllTest />;
+      case "/role":
+        return <AdminGetAllTest />;
+      default:
+        return <AdminDashboard />;
     }
   };
+
   if (loading) {
     return <div>Loading.....</div>;
   }
@@ -44,10 +55,6 @@ export default function Dashboard() {
   return (
     <div className="flex">
       <aside className="flex flex-col w-64 h-screen px-4 py-8 overflow-y-auto bg-white border-r rtl:border-r-0 rtl:border-l dark:bg-gray-900 dark:border-gray-700">
-        <a href="#" className="mx-auto">
-          <h1 className="w-auto h-6 sm:h-7">{user.role}</h1>
-        </a>
-
         <div className="flex flex-col items-center mt-6 -mx-2">
           <img
             className="object-cover w-24 h-24 mx-2 rounded-full"
@@ -107,6 +114,13 @@ export default function Dashboard() {
               className="flex items-center px-4 py-2 mt-5 text-gray-600 transition-colors duration-300 transform rounded-lg dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 hover:text-gray-700"
             >
               <span className="mx-4 font-medium">All Appointment</span>
+            </Link>
+            <Link
+              to="#"
+              onClick={() => setCurrentPage("allDoctors")}
+              className="flex items-center px-4 py-2 mt-5 text-gray-600 transition-colors duration-300 transform rounded-lg dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 hover:text-gray-700"
+            >
+              <span className="mx-4 font-medium">Manage Role</span>
             </Link>
           </nav>
         </div>

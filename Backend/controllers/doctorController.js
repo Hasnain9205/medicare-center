@@ -4,25 +4,25 @@ const doctorModel = require("../models/doctorModel");
 // get doctorDetails api
 exports.doctorDetails = async (req, res) => {
   try {
-    const doctorId = req.params.id;
-    const doctor = await doctorModel.findById(doctorId);
+    const docId = req.params.id;
+    const doctor = await doctorModel.findById(docId);
     if (!doctor) {
       return res.status(404).json({ msg: "Doctor not found" });
     }
-
-    const slotsAvailable = Object.values(doctor.slots_booked || {}).some(
-      (slots) => slots.length < doctor.total_slots
-    );
-
+    const slotsAvailable = doctor.slots_booked.some((slot) => !slot.booked);
     doctor.available = slotsAvailable;
     await doctor.save();
 
-    return res
-      .status(200)
-      .json({ msg: "Doctor details retrieved successfully", doctor });
+    return res.status(200).json({
+      msg: "Doctor details retrieved successfully",
+      doctor: {
+        ...doctor.toObject(),
+        available: doctor.available,
+      },
+    });
   } catch (error) {
     console.error(error);
-    return res.json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 

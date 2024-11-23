@@ -6,6 +6,8 @@ const {
   updateTest,
   deleteTest,
   getTestById,
+  bookTest,
+  getBookedTests,
 } = require("../controllers/testController");
 const upload = require("../middlewares/multer");
 
@@ -28,6 +30,12 @@ testRouter.delete(
   "/delete-test/:id",
   authenticationRole(["admin"]),
   deleteTest
+);
+testRouter.delete("/booked-test", authenticationRole(["user"]), bookTest);
+testRouter.delete(
+  "/get-booked-test",
+  authenticationRole(["user"]),
+  getBookedTests
 );
 
 module.exports = testRouter;

@@ -26,7 +26,7 @@ adminRouter.put(
   updateDoctor
 );
 adminRouter.delete(
-  "/delete-doctor/:id",
+  "/delete-doctor/:doctorId",
   authenticationRole(["admin"]),
   deleteDoctor
 );

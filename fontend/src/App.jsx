@@ -18,10 +18,17 @@ import TestDetails from "./components/Test/TestDetails";
 import NotFound from "./components/notFound/NotFound";
 import Doctors from "./components/departments/Doctors";
 import Appointments from "./components/topDoctors/Appointments";
-import MyTestList from "./components/Test/MyTestList";
+import MyTestList from "./pages/myProfilePage/MyTestList";
 import AdminDashboard from "./components/dashboard/adminDashboard/AdminDashboard";
 import { AddTest } from "./components/dashboard/adminDashboard/AddTest";
 import AdminGetAllTest from "./components/dashboard/adminDashboard/AdminGetAllTest";
+import Payment from "./components/payment/Payment";
+import CheckOutForm from "./components/payment/CheckOutForm";
+import PaymentHistory from "./components/payment/PaymentHistory";
+import Cancel from "./components/payment/Cancel";
+import { Success } from "./components/payment/Success";
+import UpdateProfile from "./pages/myProfilePage/UpdateProfile";
+import UpdateDoctor from "./components/dashboard/adminDashboard/UpdateDoctor";
 
 function App() {
   return (
@@ -39,9 +46,15 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/myProfile" element={<MyProfile />} />
           <Route path="/myAppointments" element={<MyAppointments />} />
-          <Route path="/appointments/:doctorId" element={<Appointments />} />
+          <Route path="/appointments/:docId" element={<Appointments />} />
           <Route path="/testDetails/:testId" element={<TestDetails />} />
           <Route path="/myTestsList" element={<MyTestList />} />
+          <Route path="/payment" element={<Payment />} />
+          <Route path="/confirm" element={<CheckOutForm />} />
+          <Route path="/history" element={<PaymentHistory />} />
+          <Route path="/success" element={<Success />} />
+          <Route path="/cancel" element={<Cancel />} />
+          <Route path="/update" element={<UpdateProfile />} />
 
           {/* Protected routes for dashboard */}
           <Route
@@ -55,6 +68,7 @@ function App() {
             <Route path="adminDashboard" element={<AdminDashboard />} />
             <Route path="addDoctor" element={<AddDoctor />} />
             <Route path="allDoctor" element={<AllDoctor />} />
+            <Route path="update" element={<UpdateDoctor />} />
             <Route path="addTest" element={<AddTest />} />
             <Route path="adminGetAllTest" element={<AdminGetAllTest />} />
           </Route>

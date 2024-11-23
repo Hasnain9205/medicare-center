@@ -5,9 +5,11 @@ import { FiPhone } from "react-icons/fi";
 import { LiaAddressCardSolid } from "react-icons/lia";
 import { BsGenderTrans } from "react-icons/bs";
 import { BsCalendar2Date } from "react-icons/bs";
+import { Link } from "react-router-dom";
 
 export default function MyProfile() {
   const { user } = useContext(AuthContext);
+  console.log(user);
 
   if (!user) {
     return <p>Loading...</p>;
@@ -51,10 +53,7 @@ export default function MyProfile() {
               <h1>Address:</h1>
             </div>
 
-            <p className="text-center text-gray-600">
-              {user.address?.line1 || "N/A"} <br />
-              {user.address?.line2 || ""}
-            </p>
+            <p className="text-center text-gray-600">{user.address || "N/A"}</p>
           </div>
         </div>
       </section>
@@ -80,9 +79,12 @@ export default function MyProfile() {
       </section>
 
       <div className="card-actions mt-6 text-center">
-        <button className="btn w-full hover:bg-blue-950 hover:text-white bg-[#47ccc8] font-bold">
+        <Link
+          to="/update"
+          className="btn w-full hover:bg-blue-950 hover:text-white bg-[#47ccc8] font-bold"
+        >
           Edit
-        </button>
+        </Link>
       </div>
     </div>
   );

@@ -74,20 +74,20 @@ export default function Navbar() {
       return (
         <>
           <NavLink
-            to="/"
-            className={({ isActive }) =>
-              `nav-link ${isActive ? "active-link" : ""}`
-            }
-          >
-            Home
-          </NavLink>
-          <NavLink
             to="/dashboard"
             className={({ isActive }) =>
               `nav-link ${isActive ? "active-link" : ""}`
             }
           >
             Dashboard
+          </NavLink>
+          <NavLink
+            to="/about"
+            className={({ isActive }) =>
+              `nav-link ${isActive ? "active-link" : ""}`
+            }
+          >
+            About
           </NavLink>
           <NavLink
             to="/contact"
@@ -113,12 +113,20 @@ export default function Navbar() {
             Dashboard
           </NavLink>
           <NavLink
-            to="/appointments"
+            to="/about"
             className={({ isActive }) =>
               `nav-link ${isActive ? "active-link" : ""}`
             }
           >
-            Appointments
+            About
+          </NavLink>
+          <NavLink
+            to="/contact"
+            className={({ isActive }) =>
+              `nav-link ${isActive ? "active-link" : ""}`
+            }
+          >
+            Contact
           </NavLink>
         </>
       );
@@ -250,25 +258,29 @@ export default function Navbar() {
                   >
                     My Profile
                   </Link>
+                  {user.role === "user" && (
+                    <>
+                      <Link
+                        to="/myAppointments"
+                        className="block px-4 py-3 text-sm text-gray-600 capitalize transition-colors duration-300 transform dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-white"
+                      >
+                        My Appointments
+                      </Link>
+                      <Link
+                        to="/myTestsList"
+                        className="block px-4 py-3 text-sm text-gray-600 capitalize transition-colors duration-300 transform dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-white"
+                      >
+                        List Of Tests
+                      </Link>
+                    </>
+                  )}
 
-                  <Link
-                    to="/myAppointments"
-                    className="block px-4 py-3 text-sm text-gray-600 capitalize transition-colors duration-300 transform dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-white"
-                  >
-                    My Appointments
-                  </Link>
-                  <Link
-                    to="/myTestsList"
-                    className="block px-4 py-3 text-sm text-gray-600 capitalize transition-colors duration-300 transform dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-white"
-                  >
-                    List Of Tests
-                  </Link>
-                  <Link
+                  <button
                     onClick={handleLogout}
                     className="block px-4 py-3 text-sm text-gray-600 capitalize transition-colors duration-300 transform dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-white"
                   >
                     Logout
-                  </Link>
+                  </button>
                 </div>
               )}
             </div>

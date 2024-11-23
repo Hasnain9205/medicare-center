@@ -3,6 +3,7 @@ import loginImg from "../../../src/assets/r.png";
 import Swal from "sweetalert2";
 import { useContext } from "react";
 import { AuthContext } from "../../components/provider/AuthProvider";
+import { ClipLoader } from "react-spinners";
 
 export default function Login() {
   const { login, loading } = useContext(AuthContext);
@@ -85,12 +86,17 @@ export default function Login() {
             <div className="form-control mt-6">
               <button
                 type="submit"
-                className={`btn bg-[#47ccc8] font-bold hover:bg-blue-950 hover:text-white ${
-                  loading ? "loading" : ""
-                }`}
+                className="btn btn-square w-full p-4 text-white bg-[#47ccc8] rounded-lg shadow-lg flex items-center justify-center"
                 disabled={loading}
               >
-                {loading ? "Logging in..." : "Login"}
+                {loading ? (
+                  <>
+                    <ClipLoader loading={loading} size={20} />
+                    <span className="ml-2 text-black">Loading...</span>
+                  </>
+                ) : (
+                  "Register"
+                )}
               </button>
               <h1 className="text-center mt-2">
                 Don't have an account?

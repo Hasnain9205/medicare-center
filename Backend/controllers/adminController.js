@@ -57,7 +57,13 @@ exports.addDoctor = async (req, res) => {
         message: "Password must be at least 8 characters",
       });
     }
-
+    const existingDoctor = await doctorModel.findOne({ email });
+    if (existingDoctor) {
+      return res.status(400).json({
+        success: false,
+        message: "A doctor with this email already exists.",
+      });
+    }
     const salt = await bcrypt.genSalt(10);
     const hashPass = await bcrypt.hash(password, salt);
     const doctorData = {
@@ -224,32 +230,21 @@ exports.updateDoctor = async (req, res) => {
 };
 
 //delete doctor api
-// Delete doctor API
 exports.deleteDoctor = async (req, res) => {
   try {
     const { doctorId } = req.params;
-
-    // Check if doctor exists
-    const doctor = await doctorModel.findById(doctorId);
+    const doctor = await doctorModel.findByIdAndDelete(doctorId);
     if (!doctor) {
       return res
         .status(404)
         .json({ success: false, message: "Doctor not found" });
     }
-
-    // Delete the doctor
-    await doctorModel.findByIdAndDelete(doctorId);
-
-    // Optionally, delete doctor's associated appointments (if needed)
-    await appointmentModel.deleteMany({ docId: doctorId });
-
-    // Return response
     return res
       .status(200)
       .json({ success: true, message: "Doctor deleted successfully" });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ success: false, message: error.message });
+    console.error("Error deleting doctor:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
@@ -291,19 +286,32 @@ exports.appointmentCancelAdmin = async (req, res) => {
 };
 
 //dashboard api for admin
+
 exports.adminDashboard = async (req, res) => {
   try {
     const doctors = await doctorModel.find({});
     const users = await userModel.find({});
-    const appointments = await appointmentModel.find({});
+    const appointments = await appointmentModel
+      .find({})
+      .populate("userId", "name profileImage email address phone")
+      .populate(
+        "docId",
+        "name email image degree specialty experience about available fees address"
+      )
+      .sort({ date: -1 }); // Sorting the appointments by date in descending order here
+
     const dashData = {
       doctors: doctors.length,
       appointments: appointments.length,
       patients: users.length,
-      latestAppointments: appointments.reverse().slice(0, 5),
+      latestAppointments: appointments.slice(0, 5), // Get only the latest 5 appointments
     };
-    return res.status(200).json({ msg: "All data get successfully", dashData });
+
+    return res
+      .status(200)
+      .json({ msg: "All data fetched successfully", dashData });
   } catch (error) {
+    console.error("Error fetching data:", error); // Log the error for debugging
     return res.status(500).json({ message: error.message });
   }
 };

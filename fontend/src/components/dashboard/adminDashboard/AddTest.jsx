@@ -1,5 +1,7 @@
 import { useState } from "react";
 import useAxios from "../../../Hook/useAxios";
+import Swal from "sweetalert2";
+import { getAccessToken } from "../../../../Utils";
 
 export const AddTest = () => {
   const [formData, setFormData] = useState({
@@ -9,6 +11,7 @@ export const AddTest = () => {
     description: "",
   });
   const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
@@ -17,13 +20,20 @@ export const AddTest = () => {
   };
 
   const handleFileChange = (e) => {
-    setImageFile(e.target.files[0]);
+    const file = e.target.files[0];
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!imageFile) {
-      alert("Please select an image file");
+      Swal.fire({
+        icon: "warning",
+        title: "Missing Image",
+        text: "Please select an image file!",
+      });
       return;
     }
 
@@ -37,130 +47,169 @@ export const AddTest = () => {
     data.append("image", imageFile);
 
     try {
+      const token = getAccessToken();
       const response = await useAxios.post("/tests/create-test", data, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
       });
-      alert(response.data.msg);
-      setFormData({ name: "", category: "", price: "", description: "" });
+
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: response.data.msg,
+      });
+
+      // Clear the form data and reset the image preview
+      setFormData({
+        name: "",
+        category: "",
+        price: "",
+        description: "",
+      });
       setImageFile(null);
+      setImagePreview(null);
     } catch (error) {
       console.error("Error creating test:", error);
-      alert("Failed to create test");
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.response?.data?.message || "Failed to create test",
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="container mx-auto my-8 p-4">
-      <h2 className="text-2xl font-bold text-center mb-4">Create Test</h2>
-      <form
-        className="max-w-lg mx-auto bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
-        onSubmit={handleSubmit}
-      >
-        <div className="mb-4">
-          <label
-            className="block text-gray-700 text-sm font-bold mb-2"
-            htmlFor="name"
-          >
-            Test Name
-          </label>
-          <input
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            id="name"
-            name="name"
-            type="text"
-            placeholder="Enter test name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="mb-4">
-          <label
-            className="block text-gray-700 text-sm font-bold mb-2"
-            htmlFor="category"
-          >
-            Category
-          </label>
-          <input
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            id="category"
-            name="category"
-            type="text"
-            placeholder="Enter test category"
-            value={formData.category}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="mb-4">
-          <label
-            className="block text-gray-700 text-sm font-bold mb-2"
-            htmlFor="price"
-          >
-            Price
-          </label>
-          <input
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            id="price"
-            name="price"
-            type="number"
-            placeholder="Enter test price"
-            value={formData.price}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="mb-4">
-          <label
-            className="block text-gray-700 text-sm font-bold mb-2"
-            htmlFor="description"
-          >
-            Description
-          </label>
-          <textarea
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            id="description"
-            name="description"
-            rows="4"
-            placeholder="Enter test description"
-            value={formData.description}
-            onChange={handleChange}
-            required
-          />
-        </div>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="bg-white shadow-lg rounded-lg p-8 w-full max-w-3xl">
+        <h2 className="text-3xl font-semibold text-gray-800 text-center mb-6">
+          Create a New Test
+        </h2>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Test Name */}
+          <div>
+            <label
+              htmlFor="name"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Test Name
+            </label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="Enter test name"
+              className="block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+              required
+            />
+          </div>
 
-        <div className="mb-4">
-          <label
-            className="block text-gray-700 text-sm font-bold mb-2"
-            htmlFor="image"
-          >
-            Upload Image
-          </label>
-          <input
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            id="image"
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            required
-          />
-        </div>
+          {/* Category */}
+          <div>
+            <label
+              htmlFor="category"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Category
+            </label>
+            <input
+              id="category"
+              name="category"
+              type="text"
+              value={formData.category}
+              onChange={handleChange}
+              placeholder="Enter test category"
+              className="block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+              required
+            />
+          </div>
 
-        {/* Submit Button */}
-        <div className="mb-4">
-          <button
-            className={`w-full bg-blue-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ${
-              isSubmitting ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-            type="submit"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Creating..." : "Create Test"}
-          </button>
-        </div>
-      </form>
+          {/* Price */}
+          <div>
+            <label
+              htmlFor="price"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Price
+            </label>
+            <input
+              id="price"
+              name="price"
+              type="number"
+              value={formData.price}
+              onChange={handleChange}
+              placeholder="Enter test price"
+              className="block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+              required
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label
+              htmlFor="description"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Description
+            </label>
+            <textarea
+              id="description"
+              name="description"
+              rows="4"
+              value={formData.description}
+              onChange={handleChange}
+              placeholder="Enter test description"
+              className="block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+              required
+            />
+          </div>
+
+          {/* Image Upload */}
+          <div>
+            <label
+              htmlFor="image"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Upload Image
+            </label>
+            <input
+              id="image"
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+              required
+            />
+            {imagePreview && (
+              <img
+                src={imagePreview}
+                alt="Preview"
+                className="mt-4 rounded-lg w-full h-48 object-cover"
+              />
+            )}
+          </div>
+
+          {/* Submit Button */}
+          <div>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={`w-full bg-blue-500 text-white py-2 px-4 rounded-lg font-medium transition-all duration-300 ${
+                isSubmitting
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-blue-600"
+              }`}
+            >
+              {isSubmitting ? "Creating..." : "Create Test"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

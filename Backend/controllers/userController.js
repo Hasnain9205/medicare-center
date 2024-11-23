@@ -5,12 +5,11 @@ const validator = require("validator");
 const doctorModel = require("../models/doctorModel");
 const appointmentModel = require("../models/appointmentModel");
 const cloudinary = require("cloudinary").v2;
-const Stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 exports.registerUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-    if (!name || !email || !password) {
+    const { name, email, password, address, gender, dob, phone } = req.body;
+    if (!name || !email || !password || !address || !gender || !dob || !phone) {
       return res.status(400).json({ msg: "All fields are required" });
     }
     if (!validator.isEmail(email)) {
@@ -42,6 +41,10 @@ exports.registerUser = async (req, res) => {
       password: hashPass,
       role: "user",
       profileImage,
+      address: address || {},
+      gender: gender || "Not Selected",
+      dob: dob || "Not Selected",
+      phone: phone || "000000000",
     };
     const newUser = new userModel(userData);
     await newUser.save();
@@ -107,175 +110,196 @@ exports.getUserProfile = async (req, res) => {
 
 exports.updateUserProfile = async (req, res) => {
   try {
-    const { userId, name, phone, address, dob, gender } = req.body;
-    const imageFile = req.file;
+    const { name, phone, address, dob, gender, image } = req.body;
+    // Perform necessary validation checks
 
-    if (!name || !phone || !dob || !gender) {
-      return res.status(400).json({ msg: "All fields are required" });
-    }
+    exports.updateUserProfile = async (req, res) => {
+      try {
+        const { name, phone, address, dob, gender, image } = req.body;
 
-    let imageUrl = null;
-    if (imageFile) {
-      const uploadResult = await cloudinary.uploader.upload(imageFile.path, {
-        resource_type: "image",
-      });
-      imageUrl = uploadResult.secure_url;
-    }
-    const updateData = {
-      name,
-      phone,
-      address: JSON.parse(address),
-      dob,
-      gender,
+        // Validate data (this is basic, consider using Joi or similar libraries)
+        if (!name || !phone || !address || !dob || !gender) {
+          return res
+            .status(400)
+            .json({ success: false, message: "All fields are required" });
+        }
+
+        // Log the user ID for debugging
+        console.log("User ID from request:", req.user.id);
+
+        // Update the user's profile
+        const updatedUser = await userModel.findByIdAndUpdate(
+          req.user.id,
+          { name, phone, address, dob, gender, image },
+          { new: true } // Return the updated document
+        );
+
+        // If no user is found
+        if (!updatedUser) {
+          return res
+            .status(404)
+            .json({ success: false, message: "User not found" });
+        }
+
+        // Respond with success
+        res.status(200).json({
+          success: true,
+          message: "Profile updated successfully",
+          user: updatedUser,
+        });
+      } catch (error) {
+        console.error("Error updating profile:", error);
+        res.status(500).json({ success: false, message: "Server error" });
+      }
     };
-    if (imageUrl) {
-      updateData.image = imageUrl;
+
+    if (!updatedUser) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
-    const updateUser = await userModel.findByIdAndUpdate(userId, updateData, {
-      new: true,
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user: updatedUser,
     });
-    if (!updateUser) {
-      return res.status(404).json({ msg: "User not found" });
-    }
-    res.status(200).json({ msg: "Profile update successfully" });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-//book appointment api
+// Book an appointment
 
 exports.bookAppointment = async (req, res) => {
+  const { userId, docId, slotDate, slotTime } = req.body;
+
   try {
-    const { userId, docId, slotDate, slotTime, centerId } = req.body;
-    const docData = await doctorModel.findById(docId).select("-password");
-    if (!docData.available) {
-      return res.status(400).json({ msg: "Doctor not available" });
+    if (!userId || !docId || !slotDate || !slotTime) {
+      return res.status(400).json({ message: "All fields are required" });
     }
-    let slots_booked = docData.slots_booked;
-    if (slots_booked[slotDate]) {
-      if (slots_booked[slotDate].includes(slotTime)) {
-        return res.status(400).json({ msg: "Slot not available" });
-      } else {
-        slots_booked[slotDate].push(slotTime);
-      }
-    } else {
-      slots_booked[slotDate] = [];
-      slots_booked[slotDate].push(slotTime);
+
+    const doctor = await doctorModel.findById(docId);
+    const user = await userModel.findById(userId);
+
+    if (!doctor) {
+      return res.status(404).json({ message: "Doctor not found" });
     }
-    const userData = await userModel.findById(userId).select("-password");
-    delete docData.slots_booked;
-    const appointmentData = {
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if slot is already booked
+    const isSlotBooked = doctor.slots_booked.some(
+      (slot) =>
+        slot.slotDate === slotDate && slot.slotTime === slotTime && slot.booked
+    );
+    if (isSlotBooked) {
+      return res.status(400).json({ message: "This slot is already booked" });
+    }
+
+    // Create appointment
+    const appointment = new appointmentModel({
       userId,
       docId,
-      userData,
-      docData,
-      centerId,
-      amount: docData.fees,
-      slotTime,
       slotDate,
+      slotTime,
+      amount: doctor.fees,
+      docData: {
+        name: doctor.name,
+        specialty: doctor.speciality || "General",
+        address: doctor.address,
+      },
+      userData: {
+        name: user.name,
+        email: user.email,
+      },
       date: Date.now(),
-    };
-    const newAppointment = new appointmentModel(appointmentData);
-    await newAppointment.save();
-    await doctorModel.findByIdAndUpdate(docId, { slots_booked });
-    return res
-      .status(200)
-      .json({ msg: "Appointment booked", appointment: newAppointment });
+    });
+
+    await appointment.save();
+
+    // Mark the slot as booked
+    doctor.slots_booked = doctor.slots_booked.map((slot) =>
+      slot.slotDate === slotDate && slot.slotTime === slotTime
+        ? { ...slot, booked: true }
+        : slot
+    );
+    await doctor.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Appointment booked successfully",
+      appointment,
+    });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    console.error("Error booking appointment:", error);
+    res.status(500).json({ message: "Error while booking appointment" });
   }
 };
 
-//get user appointment list api
-
-exports.listAppointment = async (req, res) => {
+// Fetch all appointments for the logged-in user
+exports.getAppointment = async (req, res) => {
   try {
-    const userId = req.user?.id;
-    console.log("user id", userId);
-    if (!userId) {
-      return res
-        .status(400)
-        .json({ message: "User ID is missing in the request." });
-    }
+    const userId = req.user.id; // Assuming user ID is set after authentication
+
+    // Fetch all appointments for the logged-in user
     const appointments = await appointmentModel
       .find({ userId })
-      .populate("docData");
-    console.log("appointmstns", appointments);
+      .populate("docId", "name specialty address fees") // Populate doctor details
+      .sort({ date: -1 }); // Sort by date (latest first)
 
-    return res
-      .status(200)
-      .json({ msg: "Get user appointment list", appointments });
+    // Add payment status details to each appointment
+    const appointmentDetails = appointments.map((appointment) => ({
+      ...appointment._doc,
+      isPaid: appointment.payment ? "Paid" : "Pending", // Check payment status
+      paymentStatus: appointment.payment
+        ? appointment.payment.status
+        : "Unpaid",
+    }));
+
+    res.status(200).json({
+      msg: "Appointments and payment details fetched successfully",
+      appointments: appointmentDetails,
+    });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    console.error("Error fetching appointments and payment details:", error);
+    return res.status(500).json({ message: "Error fetching appointments" });
   }
 };
 
 //Cancel appointment api
 
 exports.cancelAppointment = async (req, res) => {
-  try {
-    const { userId, appointmentId } = req.body;
-    const appointmentData = await appointmentModel.findById(appointmentId);
-    if (appointmentData.userId !== userId) {
-      return res.status(400).json({ msg: "Appointment not found" });
-    }
-    await appointmentModel.findByIdAndUpdate(appointmentId, {
-      cancelled: true,
-    });
-    const { docId, slotDate, slotTime } = appointmentData;
-    const doctorData = await doctorModel.findById(docId);
-    let slots_booked = doctorData.slots_booked;
-    slots_booked[slotDate] = slots_booked[slotDate].filter(
-      (e) => e !== slotTime
-    );
-    await doctorModel.findByIdAndUpdate(docId, { slots_booked });
-    return res.status(200).json({ msg: "Appointment cancelled" });
-  } catch (error) {
-    return res.status(500).json({ message: error.message });
-  }
-};
+  const appointmentId = req.params.id;
 
-//Payment api
-exports.paymentAppointment = async (req, res) => {
   try {
-    const { amount } = req.body;
-    const price = parseInt(amount * 100);
-    console.log(price);
-    const paymentIntent = await Stripe.paymentsIntents.create({
-      amount: price,
-      currency: "usd",
-      payment_method_types: ["card"],
-    });
-    res.status(200).json({
-      msg: "Payment successfully",
-      clientSecret: paymentIntent.client_secret,
-    });
-  } catch (error) {
-    return res.status(500).json({ message: error.message });
-  }
-};
+    // Find the appointment by ID
+    const appointment = await appointmentModel.findById(appointmentId);
 
-//
-exports.confirmPayment = async (req, res) => {
-  try {
-    const { paymentIntentId } = req.body;
-    const { appointmentId } = req.params;
-    const paymentIntent = await Stripe.paymentIntents.retrieve(paymentIntentId);
-    if (paymentIntent.status === "succeeded") {
-      const appointment = await appointmentModel.findById(appointmentId);
-      if (!appointment) {
-        return res.status(404).json({ msg: "Appointment not found" });
-      }
-      appointment.payment = true;
-      appointment.isCompleted = true;
-      await appointment.save();
-      return res.status(200).json({ msg: "Payment confirmed successfully" });
-    } else {
-      return res.status(400).json({ msg: "Payment confirmed not succeeded" });
+    if (!appointment) {
+      return res.status(404).json({ message: "Appointment not found" });
     }
-  } catch (error) {
-    return res.status(500).json({ message: error.message });
+
+    // Ensure the user is authorized to cancel the appointment
+    if (appointment.userId.toString() !== req.user.id.toString()) {
+      return res
+        .status(403)
+        .json({ message: "You are not authorized to cancel this appointment" });
+    }
+
+    // Update the appointment status to 'cancelled'
+    appointment.status = "cancelled";
+    await appointment.save();
+
+    // Respond with a success message
+    return res
+      .status(200)
+      .json({ message: "Appointment cancelled successfully" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Error cancelling appointment" });
   }
 };
 
