@@ -8,6 +8,7 @@ const {
   cancelAppointment,
   updateRole,
   getAppointment,
+  getUsers,
 } = require("../controllers/userController");
 const { authenticationRole } = require("../middlewares/authenticationRole");
 const upload = require("../middlewares/multer");
@@ -42,5 +43,6 @@ userRouter.delete(
   cancelAppointment
 );
 userRouter.put("/user-role/:userId", authenticationRole(["admin"]), updateRole);
+userRouter.get("/all-users", authenticationRole(["admin"]), getUsers);
 
 module.exports = userRouter;

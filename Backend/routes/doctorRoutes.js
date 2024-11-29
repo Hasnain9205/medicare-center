@@ -20,12 +20,12 @@ doctorRouter.get(
   authenticationRole(["doctor"]),
   doctorAppointment
 );
-doctorRouter.post(
+doctorRouter.patch(
   "/complete-appointment",
   authenticationRole(["doctor"]),
   appointmentComplete
 );
-doctorRouter.post(
+doctorRouter.patch(
   "/cancel-appointment",
   authenticationRole(["doctor", "admin"]),
   appointmentCancel

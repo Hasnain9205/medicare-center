@@ -3,7 +3,6 @@ const validator = require("validator");
 const doctorModel = require("../models/doctorModel");
 const appointmentModel = require("../models/appointmentModel");
 const userModel = require("../models/userModel");
-const cloudinary = require("cloudinary").v2;
 
 // Add doctor API
 exports.addDoctor = async (req, res) => {
@@ -19,7 +18,7 @@ exports.addDoctor = async (req, res) => {
       fees,
       address,
       image,
-      availableSlots, // Array of available slots (slotDate and slotTime)
+      availableSlots,
     } = req.body;
 
     if (!image) {
@@ -77,8 +76,9 @@ exports.addDoctor = async (req, res) => {
       fees,
       address,
       image,
+      role: "doctor",
       date: Date.now(),
-      slots_booked: [], // Initialize with an empty array
+      slots_booked: [],
     };
 
     // Save doctor data
@@ -126,106 +126,76 @@ exports.allDoctor = async (req, res) => {
   }
 };
 
-//update doctor api
+//get doctor by id
+exports.getDoctor = async (req, res) => {
+  try {
+    const doctor = await doctorModel.findById(req.params.id);
+    if (!doctor) {
+      return res.status(404).json({ message: "Doctor not found" });
+    }
+    res.json({ doctor });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 exports.updateDoctor = async (req, res) => {
   try {
+    const doctorId = req.params.id; // Get doctor ID from the URL parameter
     const {
-      doctorId,
       name,
       email,
       password,
+      image,
       speciality,
       degree,
       experience,
       about,
       fees,
       address,
+      available,
     } = req.body;
 
-    const imageFile = req.file; // Assume multer is being used for handling file uploads
-
     // Validate required fields
-    if (
-      !doctorId ||
-      !name ||
-      !email ||
-      !speciality ||
-      !degree ||
-      !experience ||
-      !about ||
-      !fees ||
-      !address
-    ) {
-      return res.json({ success: false, message: "All fields are required" });
+    if (!doctorId) {
+      return res.status(400).json({ message: "Doctor ID is required" });
     }
 
-    // Validate email format
-    if (!validator.isEmail(email)) {
-      return res.json({
-        success: false,
-        message: "Please enter a valid email",
-      });
+    // Find the doctor by ID
+    const doctor = await doctorModel.findById(doctorId);
+    if (!doctor) {
+      return res.status(404).json({ message: "Doctor not found" });
     }
 
-    // Prepare updated data
-    const updateData = {
-      name,
-      email,
-      speciality,
-      degree,
-      experience,
-      about,
-      fees,
-      address,
-    };
-
-    // Hash password if updated
+    // If password is provided, hash it
     if (password) {
-      if (password.length < 8) {
-        return res.json({
-          success: false,
-          message: "Password must be at least 8 characters",
-        });
-      }
-      const salt = await bcrypt.genSalt(10);
-      updateData.password = await bcrypt.hash(password, salt);
+      doctor.password = await bcrypt.hash(password, 10);
     }
 
-    // Image upload handling
-    if (imageFile) {
-      const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
-        resource_type: "image",
-      });
+    // Update doctor details
+    doctor.name = name || doctor.name;
+    doctor.email = email || doctor.email;
+    doctor.image = image || doctor.image;
+    doctor.speciality = speciality || doctor.speciality;
+    doctor.degree = degree || doctor.degree;
+    doctor.experience = experience || doctor.experience;
+    doctor.about = about || doctor.about;
+    doctor.fees = fees || doctor.fees;
+    doctor.address = address || doctor.address;
+    doctor.available = available !== undefined ? available : doctor.available;
 
-      if (imageUpload && imageUpload.secure_url) {
-        updateData.image = imageUpload.secure_url;
-      } else {
-        return res.json({ success: false, message: "Image upload failed" });
-      }
-    }
+    // Save the updated doctor
+    const updatedDoctor = await doctor.save();
 
-    // Update doctor in database
-    const updatedDoctor = await doctorModel.findByIdAndUpdate(
-      doctorId,
-      updateData,
-      { new: true }
-    );
-
-    if (!updatedDoctor) {
-      return res.json({
-        success: false,
-        message: "Doctor not found or update failed",
-      });
-    }
-
-    return res.json({
-      success: true,
-      message: "Doctor details updated successfully",
+    // Return the updated doctor details
+    res.status(200).json({
+      message: "Doctor updated successfully",
       doctor: updatedDoctor,
     });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ success: false, message: error.message });
+    console.error("Error updating doctor:", error);
+    res.status(500).json({ message: "Failed to update doctor" });
   }
 };
 
@@ -263,25 +233,61 @@ exports.appointmentsAdmin = async (req, res) => {
 };
 
 //appointment cancel admin api
-
 exports.appointmentCancelAdmin = async (req, res) => {
   try {
     const { appointmentId } = req.body;
+    if (!appointmentId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Appointment ID is required" });
+    }
+
     const appointmentData = await appointmentModel.findById(appointmentId);
+    if (!appointmentData) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Appointment not found" });
+    }
+
+    if (
+      appointmentData.status === "completed" ||
+      appointmentData.status === "cancelled"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "This appointment cannot be cancelled again",
+      });
+    }
 
     await appointmentModel.findByIdAndUpdate(appointmentId, {
-      cancelled: true,
+      status: "cancelled",
+      isCompleted: false,
+      cancelledAt: new Date(),
     });
+
     const { docId, slotDate, slotTime } = appointmentData;
     const doctorData = await doctorModel.findById(docId);
-    let slots_booked = doctorData.slots_booked;
-    slots_booked[slotDate] = slots_booked[slotDate].filter(
-      (e) => e !== slotTime
+    if (!doctorData) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Doctor not found" });
+    }
+
+    const updatedSlots = doctorData.slots_booked.filter(
+      (slot) => !(slot.slotDate === slotDate && slot.slotTime === slotTime)
     );
-    await doctorModel.findByIdAndUpdate(docId, { slots_booked });
-    return res.status(200).json({ msg: "Appointment cancelled" });
+
+    doctorData.slots_booked = updatedSlots;
+    await doctorData.save();
+
+    return res
+      .status(200)
+      .json({ success: true, message: "Appointment cancelled successfully" });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    console.error(error);
+    return res
+      .status(500)
+      .json({ success: false, message: "An error occurred" });
   }
 };
 

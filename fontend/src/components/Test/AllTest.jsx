@@ -1,8 +1,8 @@
 import { FaArrowRight } from "react-icons/fa6";
 import { useEffect, useState } from "react";
-import useAxios from "../../Hook/useAxios";
 import { getAccessToken } from "../../../Utils";
 import { useNavigate } from "react-router-dom";
+import useAxios from "../../Hook/useAxios";
 
 export default function AllTest() {
   const [tests, setTests] = useState([]);
@@ -15,7 +15,7 @@ export default function AllTest() {
         setTests(data.data.tests);
         console.log("test all", data.data);
       } catch (error) {
-        console.log("get doctor error", error);
+        console.log("get tests error", error);
       }
     };
     TestData();

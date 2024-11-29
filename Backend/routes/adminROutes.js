@@ -8,6 +8,7 @@ const {
   adminDashboard,
   updateDoctor,
   deleteDoctor,
+  getDoctor,
 } = require("../controllers/adminController");
 const { authenticationRole } = require("../middlewares/authenticationRole");
 
@@ -20,6 +21,7 @@ adminRouter.post(
   addDoctor
 );
 adminRouter.get("/doctors", authenticationRole(["admin"]), allDoctor);
+adminRouter.get("/doctor/:id", authenticationRole(["admin"]), getDoctor);
 adminRouter.put(
   "/update-doctor/:id",
   authenticationRole(["admin"]),

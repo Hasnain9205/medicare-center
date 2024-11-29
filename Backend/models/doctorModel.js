@@ -13,7 +13,9 @@ const doctorSchema = new mongoose.Schema(
     available: { type: Boolean, default: true },
     fees: { type: Number, required: true },
     address: { type: Object, required: true },
-    date: { type: Number, required: true },
+    role: { type: String, default: "doctor" },
+    date: { type: Date, default: Date.now },
+
     maxSlots: { type: Number, default: 20 },
     slots_booked: [
       {

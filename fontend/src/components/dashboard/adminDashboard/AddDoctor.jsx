@@ -2,6 +2,7 @@ import { useState } from "react";
 import useAxios from "../../../Hook/useAxios";
 import Swal from "sweetalert2";
 import { getAccessToken } from "../../../../Utils";
+import { ClipLoader } from "react-spinners";
 
 export default function AddDoctor() {
   const [formData, setFormData] = useState({
@@ -330,12 +331,20 @@ export default function AddDoctor() {
             </li>
           ))}
         </ul>
+
         <button
           type="submit"
-          className="bg-blue-500 text-white p-2 w-full rounded-lg"
+          className="btn btn-square w-full p-4 hover:text-white bg-[#47ccc8] rounded-lg shadow-lg flex items-center justify-center hover:bg-blue-950"
           disabled={loading}
         >
-          {loading ? "Adding..." : "Add Doctor"}
+          {loading ? (
+            <>
+              <ClipLoader loading={loading} size={20} />
+              <span className="ml-2 text-black">Adding...</span>
+            </>
+          ) : (
+            "Add Doctor"
+          )}
         </button>
       </form>
     </div>

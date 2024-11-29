@@ -2,6 +2,7 @@ import { useState } from "react";
 import useAxios from "../../../Hook/useAxios";
 import Swal from "sweetalert2";
 import { getAccessToken } from "../../../../Utils";
+import { ClipLoader } from "react-spinners";
 
 export const AddTest = () => {
   const [formData, setFormData] = useState({
@@ -198,14 +199,17 @@ export const AddTest = () => {
           <div>
             <button
               type="submit"
+              className="btn btn-square w-full p-4 hover:bg-blue-950 hover:text-white bg-[#47ccc8] rounded-lg shadow-lg flex items-center justify-center"
               disabled={isSubmitting}
-              className={`w-full bg-blue-500 text-white py-2 px-4 rounded-lg font-medium transition-all duration-300 ${
-                isSubmitting
-                  ? "opacity-50 cursor-not-allowed"
-                  : "hover:bg-blue-600"
-              }`}
             >
-              {isSubmitting ? "Creating..." : "Create Test"}
+              {isSubmitting ? (
+                <>
+                  <ClipLoader isSubmitting={isSubmitting} size={20} />
+                  <span className="ml-2 text-black">Creating...</span>
+                </>
+              ) : (
+                "Create Test"
+              )}
             </button>
           </div>
         </form>

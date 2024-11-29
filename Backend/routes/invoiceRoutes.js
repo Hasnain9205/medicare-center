@@ -2,11 +2,11 @@ const express = require("express");
 const { authenticationRole } = require("../middlewares/authenticationRole");
 const {
   createInvoice,
-  downloadPdf,
-  getAllInvoice,
-  getInvoiceById,
   updateInvoice,
   deleteInvoice,
+  getAllInvoices,
+  getInvoiceByUserId,
+  downloadPdf,
 } = require("../controllers/invoiceController");
 
 const invoiceRouter = express.Router();
@@ -16,12 +16,17 @@ invoiceRouter.post(
   authenticationRole(["user", "admin"]),
   createInvoice
 );
-invoiceRouter.get("/all-invoice", authenticationRole(["admin"]), getAllInvoice);
 invoiceRouter.get(
-  "/get-invoice/:invoiceId",
+  "/get-invoice/:userId",
   authenticationRole(["admin", "user"]),
-  getInvoiceById
+  getInvoiceByUserId
 );
+invoiceRouter.get(
+  "/all-invoice",
+  authenticationRole(["admin"]),
+  getAllInvoices
+);
+
 invoiceRouter.put(
   "/update-invoice/:invoiceId",
   authenticationRole(["admin"]),

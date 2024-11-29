@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import useAxios from "../../../Hook/useAxios";
 import Swal from "sweetalert2";
 import { getAccessToken } from "../../../../Utils";
+import { ClipLoader } from "react-spinners";
 
 export default function AdminGetAllTest() {
   const [tests, setTests] = useState([]); // Initialize as an empty array
@@ -145,10 +146,19 @@ export default function AdminGetAllTest() {
               </td>
               <td className="border px-4 py-2 text-center">
                 <button
-                  className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-700"
+                  type="submit"
+                  className="btn btn-square px-10   hover:text-white bg-[#47ccc8] hover:bg-blue-950 "
                   onClick={() => handleEdit(test)}
+                  disabled={loading}
                 >
-                  Update
+                  {loading ? (
+                    <>
+                      <ClipLoader loading={loading} size={20} />
+                      <span className="ml-2 text-black">Updating...</span>
+                    </>
+                  ) : (
+                    "Update"
+                  )}
                 </button>
               </td>
             </tr>
@@ -212,13 +222,22 @@ export default function AdminGetAllTest() {
                   required
                 />
               </div>
-              <div className="flex justify-end">
+              <div className="flex gap-2 justify-end">
                 <button
                   type="submit"
-                  className="bg-blue-500 text-white px-4 py-2 rounded mr-2"
+                  className="btn btn-square px-10   hover:text-white bg-[#47ccc8] hover:bg-blue-950"
+                  disabled={loading}
                 >
-                  Save
+                  {loading ? (
+                    <>
+                      <ClipLoader loading={loading} size={20} />
+                      <span className="ml-2 text-black">Saving...</span>
+                    </>
+                  ) : (
+                    "Save"
+                  )}
                 </button>
+
                 <button
                   type="button"
                   onClick={() => setIsEditing(false)}

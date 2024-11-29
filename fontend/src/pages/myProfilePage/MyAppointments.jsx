@@ -36,16 +36,15 @@ const MyAppointments = () => {
 
   const totalAmount = appointments.reduce(
     (total, appointment) =>
-      appointment.paymentStatus === "Unpaid"
-        ? total + appointment.amount
-        : total,
+      appointment.status === "pending" ? total + appointment.amount : total,
     0
   );
 
   const handlePayTotal = () => {
     const unpaidAppointments = appointments.filter(
-      (appointment) => appointment.paymentStatus === "Unpaid"
+      (appointment) => appointment.status === "pending"
     );
+
     navigate("/payment", { state: { totalAmount, unpaidAppointments } });
   };
 
@@ -67,8 +66,6 @@ const MyAppointments = () => {
             (appointment) => appointment._id !== appointmentId
           )
         );
-
-        // Use SweetAlert2 to show a success message
         Swal.fire({
           icon: "success",
           title: "Appointment Cancelled",
@@ -78,8 +75,6 @@ const MyAppointments = () => {
         setError(
           err.response?.data?.message || "Failed to cancel appointment."
         );
-
-        // Use SweetAlert2 to show an error message
         Swal.fire({
           icon: "error",
           title: "Error",
@@ -102,7 +97,7 @@ const MyAppointments = () => {
   return (
     <div className="max-w-6xl mx-auto py-8 px-4">
       <h2 className="text-3xl font-semibold text-center mb-6">
-        Your Appointments
+        My Doctor Appointments
       </h2>
 
       <div className="flex justify-between items-center mb-6">

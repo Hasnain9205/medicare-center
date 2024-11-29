@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import useAxios from "../../Hook/useAxios";
 import Swal from "sweetalert2";
 
-export const Success = () => {
+const Success = () => {
   const [paymentDetails, setPaymentDetails] = useState(null);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const location = useLocation(); // Used to extract the query params
@@ -104,3 +104,5 @@ export const Success = () => {
     </div>
   );
 };
+
+export default Success;

@@ -4,10 +4,14 @@ const {
   createTest,
   getAllTest,
   updateTest,
-  deleteTest,
   getTestById,
   bookTest,
-  getBookedTests,
+  cancelTest,
+  getTestAppointment,
+  payment,
+  paymentSuccess,
+  paymentHistory,
+  updateTestAppointmentStatus,
 } = require("../controllers/testController");
 const upload = require("../middlewares/multer");
 
@@ -21,21 +25,25 @@ testRouter.post(
 );
 testRouter.get("/get-all-test", getAllTest);
 testRouter.get(
-  "/test-by-id/:id",
+  "/test-by-id/:testId",
   authenticationRole(["user", "admin"]),
   getTestById
 );
-testRouter.put("/update-test/:id", authenticationRole(["admin"]), updateTest);
-testRouter.delete(
-  "/delete-test/:id",
+testRouter.post("/book-test", authenticationRole(["user"]), bookTest);
+testRouter.get(
+  "/get-test-appointment",
+  authenticationRole(["user", "admin"]),
+  getTestAppointment
+);
+testRouter.patch(
+  "/update-appointment-status/:id",
   authenticationRole(["admin"]),
-  deleteTest
+  updateTestAppointmentStatus
 );
-testRouter.delete("/booked-test", authenticationRole(["user"]), bookTest);
-testRouter.delete(
-  "/get-booked-test",
-  authenticationRole(["user"]),
-  getBookedTests
-);
+testRouter.put("/update-test/:id", authenticationRole(["admin"]), updateTest);
+testRouter.post("/cancel/:id", authenticationRole(["user"]), cancelTest);
+testRouter.post("/create-payment-intent", payment);
+testRouter.post("/payment-success", paymentSuccess);
+testRouter.post("/history", authenticationRole(["admin"]), paymentHistory);
 
 module.exports = testRouter;

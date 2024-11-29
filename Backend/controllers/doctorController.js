@@ -41,12 +41,34 @@ exports.doctorList = async (req, res) => {
 
 exports.doctorAppointment = async (req, res) => {
   try {
-    const { docId } = req.body;
-    const appointment = await appointmentModel.find({ docId });
-    return res
-      .status(200)
-      .json({ msg: "All appointment get successfully", appointment });
+    // Get docId from query parameters
+    const { docId } = req.query;
+
+    // Validate that docId is provided
+    if (!docId) {
+      return res.status(400).json({ message: "Doctor ID is required" });
+    }
+
+    // Fetch appointments for the given doctor, sorted by slotDate in descending order
+    const appointments = await appointmentModel
+      .find({ docId })
+      .sort({ slotDate: -1 }) // Sort by slotDate descending
+      .populate("userData", "name"); // Optionally populate user data if needed (e.g., patient's name)
+    console.log("a...", appointments);
+    // Check if appointments are found
+    if (!appointments.length) {
+      return res
+        .status(404)
+        .json({ message: "No appointments found for this doctor" });
+    }
+
+    // Return the fetched appointments
+    return res.status(200).json({
+      msg: "Appointments fetched successfully",
+      appointment: appointments,
+    });
   } catch (error) {
+    console.error("Error fetching appointments:", error);
     return res.status(500).json({ message: error.message });
   }
 };
@@ -57,14 +79,26 @@ exports.appointmentComplete = async (req, res) => {
   try {
     const { docId, appointmentId } = req.body;
     const appointmentData = await appointmentModel.findById(appointmentId);
-    if (appointmentData && appointmentData.docId === docId) {
-      await appointmentModel.findByIdAndUpdate(appointmentId, {
-        isCompleted: true,
-      });
-      return res.status(200).json({ msg: "appointment completed" });
-    } else {
-      return res.status(400).json({ msg: "Appointment completed failed" });
+    console.log("appoitnemnt...", appointmentData);
+    if (appointmentData.status === "completed") {
+      return res
+        .status(400)
+        .json({ msg: "This appointment is already completed" });
     }
+
+    if (!appointmentData) {
+      return res.status(404).json({ msg: "Appointment not found" });
+    }
+    if (appointmentData.docId.toString() !== docId) {
+      return res
+        .status(400)
+        .json({ msg: "Appointment does not belong to this doctor" });
+    }
+    await appointmentModel.findByIdAndUpdate(appointmentId, {
+      isCompleted: true,
+      status: "completed",
+    });
+    return res.status(200).json({ msg: "Appointment completed successfully" });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
@@ -76,48 +110,61 @@ exports.appointmentCancel = async (req, res) => {
   try {
     const { docId, appointmentId } = req.body;
     const appointmentData = await appointmentModel.findById(appointmentId);
-    if (appointmentData && appointmentData.docId === docId) {
-      await appointmentModel.findByIdAndUpdate(appointmentId, {
-        cancelled: true,
-      });
-      return res.status(200).json({ msg: "appointment cancelled" });
-    } else {
-      return res.status(400).json({ msg: "Appointment cancelled failed" });
+    if (appointmentData.status === "cancelled") {
+      return res
+        .status(400)
+        .json({ msg: "This appointment is already cancelled" });
     }
+    if (appointmentData.docId.toString() !== docId) {
+      return res
+        .status(400)
+        .json({ msg: "Appointment does not belong to this doctor" });
+    }
+    await appointmentModel.findByIdAndUpdate(appointmentId, {
+      status: "cancelled",
+    });
+    return res.status(200).json({ msg: "appointment cancelled" });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
 };
 
 //doctor dashboard
-
 exports.doctorDashboard = async (req, res) => {
   try {
-    const { docId } = req.body;
-    const appointments = await appointmentModel.find({ docId });
+    const { docId } = req.query;
+    if (!docId) {
+      return res.status(400).json({ message: "Doctor ID is required" });
+    }
+    const appointments = await appointmentModel
+      .find({ docId })
+      .sort({ slotDate: -1 });
     let earnings = 0;
-    appointments.map((item) => {
-      if (item.isCompleted || item.payment) {
-        earnings += item.amount;
+    const patients = new Set();
+    appointments.forEach((appointment) => {
+      if (appointment.isCompleted || appointment.payment) {
+        earnings += appointment.amount || 0;
       }
+      patients.add(appointment.userId.toString());
     });
-    let patients = [];
-    appointments.map((item) => {
-      if (!patients.includes(item.userId)) {
-        patients.push(item.userId);
-      }
-    });
+
+    // Prepare dashboard data
     const dashData = {
       earnings,
       appointments: appointments.length,
-      patients: patients.length,
-      latestAppointments: appointments.reverse().slice(0, 5),
+      patients: patients.size, // Count of unique patients
+      latestAppointments: appointments.slice(0, 5), // Latest 5 appointments
     };
+
+    // Send success response with data
     return res
       .status(200)
-      .json({ msg: "Doctor dashboard data get successfully", dashData });
+      .json({ msg: "Doctor dashboard data retrieved successfully", dashData });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    console.error("Error fetching doctor dashboard data:", error); // Log for debugging
+    return res
+      .status(500)
+      .json({ message: "An error occurred. Please try again later." });
   }
 };
 

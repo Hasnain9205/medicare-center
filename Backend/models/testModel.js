@@ -2,23 +2,23 @@ const mongoose = require("mongoose");
 
 const TestSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  image: { type: String, required: true },
-  category: { type: String, required: true },
-  price: { type: Number, required: true },
-  description: { type: String },
+  image: { type: String, required: true }, // URL of the test image
+  category: { type: String, required: true }, // e.g., Blood Test, X-Ray
+  price: { type: Number, required: true }, // Price of the test
+  description: { type: String }, // Optional detailed description of the test
   status: {
     type: String,
-    enum: ["available", "booked", "completed", "cancelled"],
+    enum: ["available", "booked", "cancelled"],
     default: "available",
-  },
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Booked by
-  userData: {
-    type: {
-      name: String,
-      email: String,
-    },
-  },
-  createdAt: { type: Date, default: Date.now },
+  }, // Test availability status
+  createdAt: { type: Date, default: Date.now }, // Creation timestamp
+  updatedAt: { type: Date, default: Date.now }, // Last update timestamp
+});
+
+// Automatically update `updatedAt` before saving
+TestSchema.pre("save", function (next) {
+  this.updatedAt = Date.now();
+  next();
 });
 
 module.exports = mongoose.model("Test", TestSchema);

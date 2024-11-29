@@ -18,6 +18,7 @@ export default function AdminDashboard() {
         const response = await useAxios.get("/admin/dashboard", {
           headers: { Authorization: `Bearer ${token}` },
         });
+        console.log("object", response.data.dashData);
         setDashboardData(response.data.dashData);
         console.log(response.data.dashData.latestAppointments);
       } catch (error) {
@@ -42,7 +43,7 @@ export default function AdminDashboard() {
   return (
     <div className="p-8 bg-gray-100">
       <h2 className="text-2xl font-semibold mb-4">Admin Dashboard</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-4 bg-white shadow rounded-lg flex items-center justify-center gap-4">
           <div>
             <FaUserDoctor className="w-10 h-10 text-[#47ccc8]" />
@@ -68,6 +69,15 @@ export default function AdminDashboard() {
           <div>
             <p className="text-2xl font-bold">{dashboardData.appointments}</p>
             <h3 className="text-lg font-semibold">Appointments</h3>
+          </div>
+        </div>
+        <div className="p-4 bg-white shadow rounded-lg flex items-center justify-center gap-4">
+          <div>
+            <GrUserManager className="w-10 h-10 text-[#47ccc8]" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold">{dashboardData.appointments}</p>
+            <h3 className="text-lg font-semibold">Test Appointment</h3>
           </div>
         </div>
       </div>

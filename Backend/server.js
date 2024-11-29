@@ -7,8 +7,8 @@ const adminRouter = require("./routes/adminROutes");
 const userRouter = require("./routes/userRoutes");
 const doctorRouter = require("./routes/doctorRoutes");
 const testRouter = require("./routes/testRoutes");
-const invoiceRouter = require("./routes/invoiceRoutes");
 const paymentRouter = require("./routes/paymentRoutes");
+const invoiceRouter = require("./routes/invoiceRoutes");
 
 const app = express();
 const port = process.env.PORT || 5001;
@@ -27,7 +27,7 @@ app.use("/api/tests", testRouter);
 app.use("/api/invoice", invoiceRouter);
 app.use("/api/payment", paymentRouter);
 
-app.get("", (req, res) => {
+app.get("/", (req, res) => {
   res.send("Running Api in port");
 });
 

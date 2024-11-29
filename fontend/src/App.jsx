@@ -1,95 +1,119 @@
+import React from "react";
 import { Route, Routes } from "react-router-dom";
-import Home from "./pages/homePage/Home";
 import Navbar from "./components/navbar/Navbar";
-import Login from "./pages/loginPage/Login";
+import Footer from "./pages/Footer/Footer";
+import PrivateRoute from "./components/privateRoute/PrivateRoute";
+
+// Pages
+import Home from "./pages/homePage/Home";
 import About from "./pages/aboutPage/About";
 import Contact from "./pages/contactPage/Contact";
-import DocAppointment from "./pages/appointments/DocAppointment";
+import Login from "./pages/loginPage/Login";
 import Register from "./pages/registerPage/Register";
-import PrivateRoute from "./components/privateRoute/PrivateRoute";
+import NotFound from "./components/notFound/NotFound";
+
+// Profile and Appointments
 import MyProfile from "./pages/myProfilePage/MyProfile";
-import Dashboard from "./components/dashboard/Dashboard";
-import AddDoctor from "./components/dashboard/adminDashboard/AddDoctor";
-import AllDoctor from "./components/dashboard/adminDashboard/AllDoctor";
-import Footer from "./pages/Footer/Footer";
+import UpdateProfile from "./pages/myProfilePage/UpdateProfile";
 import MyAppointments from "./pages/myProfilePage/MyAppointments";
 import MyAppointment from "./pages/appointments/MyAppointment";
-import TestDetails from "./components/Test/TestDetails";
-import NotFound from "./components/notFound/NotFound";
+import MyTestInvoices from "./pages/myProfilePage/MyTestInvoices";
+import PaymentSuccess from "./pages/myProfilePage/PaymentSuccess";
+import TestPayment from "./pages/myProfilePage/TestPayment";
+
+// Doctors and Departments
 import Doctors from "./components/departments/Doctors";
 import Appointments from "./components/topDoctors/Appointments";
-import MyTestList from "./pages/myProfilePage/MyTestList";
-import AdminDashboard from "./components/dashboard/adminDashboard/AdminDashboard";
-import { AddTest } from "./components/dashboard/adminDashboard/AddTest";
-import AdminGetAllTest from "./components/dashboard/adminDashboard/AdminGetAllTest";
+import DocAppointment from "./pages/appointments/DocAppointment";
+
+// Tests and Payment
+import TestDetails from "./components/Test/TestDetails";
 import Payment from "./components/payment/Payment";
 import CheckOutForm from "./components/payment/CheckOutForm";
 import PaymentHistory from "./components/payment/PaymentHistory";
 import Cancel from "./components/payment/Cancel";
-import { Success } from "./components/payment/Success";
-import UpdateProfile from "./pages/myProfilePage/UpdateProfile";
-import UpdateDoctor from "./components/dashboard/adminDashboard/UpdateDoctor";
+import Success from "./components/payment/Success";
+import CreateInvoice from "./components/Invoice/createInvoice";
 
-function App() {
+// Admin Dashboard
+import Dashboard from "./components/dashboard/Dashboard";
+import AdminDashboard from "./components/dashboard/adminDashboard/AdminDashboard";
+import AddDoctor from "./components/dashboard/adminDashboard/AddDoctor";
+import AllDoctor from "./components/dashboard/adminDashboard/AllDoctor";
+import AdminGetAllTest from "./components/dashboard/adminDashboard/AdminGetAllTest";
+import TestAppointment from "./components/dashboard/adminDashboard/TestAppointment";
+import AllAppointment from "./components/dashboard/adminDashboard/AllAppointment";
+import ManageRole from "./components/dashboard/adminDashboard/ManageRole";
+import { AddTest } from "./components/dashboard/adminDashboard/AddTest";
+import { MyTestAppointment } from "./pages/myProfilePage/MyTestAppointment";
+import DoctorDashboard from "./components/dashboard/doctorDashboard/DoctorDashboard";
+import Appointment from "./components/dashboard/doctorDashboard/Appointment";
+
+const App = () => {
   return (
     <div>
-      <div className="mx-4 sm:mx-[10%]">
-        <Navbar />
-
+      <Navbar className="mx-20" />
+      <div className="mx-20 sm:mx-[10%]">
         <Routes>
+          {/* Public Routes */}
           <Route path="/" element={<Home />} />
-          <Route path="/doctors" element={<Doctors />} />
-          <Route path="/doctors/:speciality" element={<Doctors />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/myProfile" element={<MyProfile />} />
-          <Route path="/myAppointments" element={<MyAppointments />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="*" element={<NotFound />} />
+
+          {/* Doctors and Specialties */}
+          <Route path="/doctors" element={<Doctors />} />
+          <Route path="/doctors/:speciality" element={<Doctors />} />
           <Route path="/appointments/:docId" element={<Appointments />} />
+
+          {/* user Routes */}
+          <Route path="/myProfile" element={<MyProfile />} />
+          <Route path="/update" element={<UpdateProfile />} />
+          <Route path="/myAppointments" element={<MyAppointments />} />
+          <Route path="/myAppointment" element={<MyAppointment />} />
           <Route path="/testDetails/:testId" element={<TestDetails />} />
-          <Route path="/myTestsList" element={<MyTestList />} />
+          <Route path="/testAppointment" element={<MyTestAppointment />} />
+          <Route path="/testPayment" element={<TestPayment />} />
+          <Route path="/paymentSuccess" element={<PaymentSuccess />} />
+          <Route path="/invoices/:userId" element={<MyTestInvoices />} />
+          <Route path="/appointments/:docId" element={<DocAppointment />} />
+          <Route path="/createInvoice" element={<CreateInvoice />} />
           <Route path="/payment" element={<Payment />} />
           <Route path="/confirm" element={<CheckOutForm />} />
           <Route path="/history" element={<PaymentHistory />} />
           <Route path="/success" element={<Success />} />
           <Route path="/cancel" element={<Cancel />} />
-          <Route path="/update" element={<UpdateProfile />} />
 
-          {/* Protected routes for dashboard */}
+          {/* Admin Dashboard */}
           <Route
-            path="/dashboard/*"
+            path="/dashboard"
             element={
               <PrivateRoute>
                 <Dashboard />
               </PrivateRoute>
             }
           >
+            {/* Admin Routes */}
             <Route path="adminDashboard" element={<AdminDashboard />} />
             <Route path="addDoctor" element={<AddDoctor />} />
             <Route path="allDoctor" element={<AllDoctor />} />
-            <Route path="update" element={<UpdateDoctor />} />
             <Route path="addTest" element={<AddTest />} />
             <Route path="adminGetAllTest" element={<AdminGetAllTest />} />
+            <Route path="testAppointment" element={<TestAppointment />} />
+            <Route path="all-appointment" element={<AllAppointment />} />
+            <Route path="update-role/:userId" element={<ManageRole />} />
+
+            {/* Doctor Dashboard */}
+            <Route path="doctorDashboard" element={<DoctorDashboard />} />
+            <Route path="appointment" element={<Appointment />} />
           </Route>
-
-          <Route path="/myAppointment" element={<MyAppointment />} />
-          <Route
-            path="/appointments/:docId"
-            element={
-              <PrivateRoute>
-                <DocAppointment />
-              </PrivateRoute>
-            }
-          />
-
-          {/* Fallback Route for unknown URLs */}
-          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
       <Footer />
     </div>
   );
-}
+};
 
 export default App;

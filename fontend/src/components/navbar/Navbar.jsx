@@ -215,7 +215,7 @@ export default function Navbar() {
                 className="flex items-center p-2 text-sm text-gray-600 bg-white border border-transparent rounded-md focus:border-blue-500 focus:ring-opacity-40 dark:focus:ring-opacity-40 focus:ring-blue-300 dark:focus:ring-blue-400 focus:ring dark:text-white dark:bg-gray-800 focus:outline-none"
               >
                 <img
-                  src={user.profileImage || profile}
+                  src={user.profileImage || user.image || profile}
                   className="w-10 h-10 rounded-full"
                   alt="Profile"
                 />
@@ -267,10 +267,16 @@ export default function Navbar() {
                         My Appointments
                       </Link>
                       <Link
-                        to="/myTestsList"
+                        to="/testAppointment"
                         className="block px-4 py-3 text-sm text-gray-600 capitalize transition-colors duration-300 transform dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-white"
                       >
-                        List Of Tests
+                        My Test Appointments
+                      </Link>
+                      <Link
+                        to={`/invoices/${user.id}`}
+                        className="block px-4 py-3 text-sm text-gray-600 capitalize transition-colors duration-300 transform dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-white"
+                      >
+                        Test Invoices
                       </Link>
                     </>
                   )}

@@ -33,7 +33,7 @@ export default function Login() {
           navigate("/dashboard");
           break;
         case "doctor":
-          navigate("/doctorDashboard");
+          navigate("/dashboard");
           break;
         default:
           navigate("/");
@@ -86,16 +86,16 @@ export default function Login() {
             <div className="form-control mt-6">
               <button
                 type="submit"
-                className="btn btn-square w-full p-4 text-white bg-[#47ccc8] rounded-lg shadow-lg flex items-center justify-center"
+                className="btn btn-square w-full p-4 hover:text-white bg-[#47ccc8] rounded-lg shadow-lg flex items-center justify-center"
                 disabled={loading}
               >
                 {loading ? (
                   <>
                     <ClipLoader loading={loading} size={20} />
-                    <span className="ml-2 text-black">Loading...</span>
+                    <span className="ml-2 text-black">Loging...</span>
                   </>
                 ) : (
-                  "Register"
+                  "Login"
                 )}
               </button>
               <h1 className="text-center mt-2">

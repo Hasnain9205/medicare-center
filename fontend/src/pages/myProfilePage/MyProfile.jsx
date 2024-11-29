@@ -19,7 +19,7 @@ export default function MyProfile() {
     <div className="max-w-2xl overflow-hidden bg-white rounded-lg shadow-md dark:bg-gray-800">
       <figure className=" pt-10">
         <img
-          src={user.profileImage || "default-profile.png"}
+          src={user.profileImage || user.image || "default-profile.png"}
           alt={user.name || "Default Profile"}
           className="object-cover w-full h-64"
         />

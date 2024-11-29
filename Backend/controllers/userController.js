@@ -56,14 +56,19 @@ exports.registerUser = async (req, res) => {
 };
 
 exports.loginUser = async (req, res) => {
+  const { email, password } = req.body;
   try {
-    const { email, password } = req.body;
     if (!email || !password) {
       return res.status(400).json({ msg: "Email and password are required" });
     }
-    const user = await userModel.findOne({ email });
+
+    let user = await doctorModel.findOne({ email });
     if (!user) {
-      return res.status(400).json({ msg: "Invalid credentials" });
+      // If not admin, check if the user is a general user
+      user = await userModel.findOne({ email });
+      if (!user) {
+        return res.status(400).json({ msg: "Invalid credentials" });
+      }
     }
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
@@ -111,61 +116,39 @@ exports.getUserProfile = async (req, res) => {
 exports.updateUserProfile = async (req, res) => {
   try {
     const { name, phone, address, dob, gender, image } = req.body;
-    // Perform necessary validation checks
 
-    exports.updateUserProfile = async (req, res) => {
-      try {
-        const { name, phone, address, dob, gender, image } = req.body;
+    // Validate data (this is basic, consider using Joi or similar libraries)
+    if (!name || !phone || !address || !dob || !gender) {
+      return res
+        .status(400)
+        .json({ success: false, message: "All fields are required" });
+    }
 
-        // Validate data (this is basic, consider using Joi or similar libraries)
-        if (!name || !phone || !address || !dob || !gender) {
-          return res
-            .status(400)
-            .json({ success: false, message: "All fields are required" });
-        }
+    // Log the user ID for debugging
+    console.log("User ID from request:", req.user.id);
 
-        // Log the user ID for debugging
-        console.log("User ID from request:", req.user.id);
+    // Update the user's profile
+    const updatedUser = await userModel.findByIdAndUpdate(
+      req.user.id,
+      { name, phone, address, dob, gender, image },
+      { new: true } // Return the updated document
+    );
 
-        // Update the user's profile
-        const updatedUser = await userModel.findByIdAndUpdate(
-          req.user.id,
-          { name, phone, address, dob, gender, image },
-          { new: true } // Return the updated document
-        );
-
-        // If no user is found
-        if (!updatedUser) {
-          return res
-            .status(404)
-            .json({ success: false, message: "User not found" });
-        }
-
-        // Respond with success
-        res.status(200).json({
-          success: true,
-          message: "Profile updated successfully",
-          user: updatedUser,
-        });
-      } catch (error) {
-        console.error("Error updating profile:", error);
-        res.status(500).json({ success: false, message: "Server error" });
-      }
-    };
-
+    // If no user is found
     if (!updatedUser) {
       return res
         .status(404)
         .json({ success: false, message: "User not found" });
     }
 
+    // Respond with success
     res.status(200).json({
       success: true,
       message: "Profile updated successfully",
       user: updatedUser,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error updating profile:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
@@ -321,5 +304,18 @@ exports.updateRole = async (req, res) => {
     res.status(200).json({ msg: "user role updated successfully", user });
   } catch (error) {
     return res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getUsers = async (req, res) => {
+  try {
+    const users = await userModel.find();
+    res.status(200).json({
+      msg: "Fetched all users successfully",
+      users,
+    });
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ message: "Error fetching users" });
   }
 };

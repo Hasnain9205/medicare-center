@@ -1,11 +1,14 @@
-import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 import useAxios from "../../Hook/useAxios";
 import { getAccessToken } from "../../../Utils";
 
-export default function TestDetails() {
+const TestDetails = () => {
+  const { testId } = useParams(); // Fetch testId from URL params
+  const navigate = useNavigate();
   const [test, setTest] = useState(null);
-  const { testId } = useParams();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchTestDetails = async () => {
@@ -16,73 +19,111 @@ export default function TestDetails() {
         });
         setTest(response.data.test);
       } catch (error) {
-        console.error("Error fetching test details:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Failed to fetch test details. Redirecting to home...",
+        });
+        navigate("/");
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchTestDetails();
-  }, [testId]);
+  }, [testId, navigate]);
 
-  const handleSelectTest = () => {
-    if (test) {
-      let selectedTests =
-        JSON.parse(localStorage.getItem("selectedTests")) || [];
-      if (selectedTests.some((selectedTest) => selectedTest._id === test._id)) {
-        alert(`${test.name} is already selected.`);
-        return;
+  const bookTest = async () => {
+    const { value: formValues } = await Swal.fire({
+      title: "Book Test Appointment",
+      html: `
+        <input id="date" type="date" class="swal2-input" placeholder="Appointment Date" />
+        <input id="time" type="time" class="swal2-input" placeholder="Appointment Time" />
+      `,
+      focusConfirm: false,
+      preConfirm: () => {
+        const date = document.getElementById("date").value;
+        const time = document.getElementById("time").value;
+        return { appointmentDate: date, appointmentTime: time };
+      },
+      showCancelButton: true,
+      confirmButtonText: "Book Now",
+    });
+
+    if (!formValues) return;
+
+    const { appointmentDate, appointmentTime } = formValues;
+
+    try {
+      const token = getAccessToken();
+      const userId = localStorage.getItem("userId");
+      if (!userId) {
+        Swal.fire({
+          icon: "warning",
+          title: "Not Logged In",
+          text: "Please log in to book a test.",
+        });
+        return navigate("/login");
       }
-      selectedTests.push(test);
-      localStorage.setItem("selectedTests", JSON.stringify(selectedTests));
-      alert(`${test.name} has been added to your selected tests.`);
+
+      const response = await useAxios.post(
+        "/tests/book-test",
+        { testId, userId, appointmentDate, appointmentTime },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: response.data.message,
+      });
+
+      navigate("/testAppointment");
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.response?.data?.message || "Something went wrong.",
+      });
     }
   };
 
-  const selectedTests = JSON.parse(localStorage.getItem("selectedTests")) || [];
-  const isTestSelected = selectedTests.some(
-    (selectedTest) => selectedTest._id === testId
-  );
+  if (loading)
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
+        <p className="mt-4 text-gray-600">Loading test details...</p>
+      </div>
+    );
+
+  if (!test)
+    return <p className="text-center text-gray-600">Test not found.</p>;
 
   return (
-    <div className="items-center mt-20 container mx-auto">
-      {test ? (
-        <>
-          <div className="flex flex-col md:flex-row gap-10 bg-white shadow-md rounded-lg p-8 transition-all duration-200 transform hover:shadow-lg hover:scale-105">
-            <div className="md:w-1/3">
-              <img
-                src={test.image}
-                alt={test.name}
-                className="w-full h-64 object-cover rounded-md shadow-md"
-              />
-            </div>
-            <div className="md:w-2/3">
-              <h1 className="text-3xl font-bold text-blue-900 mb-2">
-                {test.name}
-              </h1>
-              <p className="text-gray-700 text-lg mb-4">{test.description}</p>
-              <p className="text-lg font-medium text-teal-700 mb-4">
-                Category: <span className="font-semibold">{test.category}</span>
-              </p>
-              <p className="text-2xl font-semibold text-green-600 mb-10">
-                Price: {test.price} Taka
-              </p>
-
-              <button
-                onClick={handleSelectTest}
-                disabled={isTestSelected}
-                className={`${
-                  isTestSelected
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-teal-600 hover:bg-blue-900 hover:text-teal-100"
-                } text-white font-semibold py-3 px-8 rounded-lg shadow-lg transition-all duration-200`}
-              >
-                {isTestSelected ? "Test Already Selected" : "Book Test"}
-              </button>
-            </div>
-          </div>
-        </>
-      ) : (
-        <p className="text-gray-500">Loading test details...</p>
-      )}
+    <div className="max-w-lg mx-auto my-10 p-6 bg-white shadow-md rounded-lg">
+      <div className="text-center">
+        <img
+          src={test.image}
+          alt={test.name}
+          className="w-full h-64 object-cover rounded-md mb-4"
+        />
+        <h1 className="text-2xl font-semibold text-gray-800">{test.name}</h1>
+        <p className="mt-2 text-gray-600">{test.description}</p>
+        <p className="mt-2">
+          <span className="font-semibold">Category:</span> {test.category}
+        </p>
+        <p className="mt-2">
+          <span className="font-semibold">Price:</span> ${test.price}
+        </p>
+      </div>
+      <button
+        onClick={bookTest}
+        className="mt-6 w-full bg-blue-600 text-white py-2 rounded-md shadow-md hover:bg-blue-700 transition duration-300"
+      >
+        Book Test
+      </button>
     </div>
   );
-}
+};
+
+export default TestDetails;

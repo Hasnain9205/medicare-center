@@ -33,11 +33,10 @@ const appointmentModel = new mongoose.Schema({
     enum: ["booked", "pending", "completed", "cancelled"],
     default: "pending",
   },
-  paymentIntentId: { type: String }, // Store Stripe paymentIntent ID
+  paymentIntentId: { type: String },
   cancelledAt: { type: Date },
 });
 
-// Add indexes for faster query performance
 appointmentModel.index({ userId: 1, docId: 1, slotDate: 1 });
 
 module.exports =
