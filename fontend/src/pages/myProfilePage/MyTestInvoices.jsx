@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { getAccessToken } from "../../../Utils";
-import useAxios from "../../Hook/useAxios";
+import axiosInstance from "../../Hook/useAxios";
 
 const MyTestInvoices = () => {
   const [invoice, setInvoice] = useState(null);
@@ -20,9 +20,12 @@ const MyTestInvoices = () => {
       }
 
       const token = getAccessToken();
-      const response = await useAxios.get(`/invoice/get-invoice/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axiosInstance.get(
+        `/invoice/get-invoice/${userId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       if (response.data.msg === "No invoices found for this user") {
         Swal.fire({
@@ -48,10 +51,13 @@ const MyTestInvoices = () => {
     try {
       const userId = localStorage.getItem("userId");
       const token = getAccessToken();
-      const response = await useAxios.get(`/invoice/download-pdf/${userId}`, {
-        responseType: "blob",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axiosInstance.get(
+        `/invoice/download-pdf/${userId}`,
+        {
+          responseType: "blob",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       const fileURL = URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");

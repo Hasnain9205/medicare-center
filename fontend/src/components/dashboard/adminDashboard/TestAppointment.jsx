@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getAccessToken } from "../../../../Utils";
-import useAxios from "../../../Hook/useAxios";
+import axiosInstance from "../../../Hook/useAxios";
 
 const TestAppointment = () => {
   const [appointments, setAppointments] = useState([]);
@@ -11,9 +11,12 @@ const TestAppointment = () => {
     const fetchAppointments = async () => {
       try {
         const token = getAccessToken();
-        const response = await useAxios.get("/tests/get-test-appointment", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await axiosInstance.get(
+          "/tests/get-test-appointment",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         console.log("data", response.data.testAppointments);
         setAppointments(response.data.testAppointments);
         setLoading(false);
@@ -30,7 +33,7 @@ const TestAppointment = () => {
   const cancelAppointment = async (appointmentId) => {
     try {
       const token = getAccessToken();
-      const response = await useAxios.post(
+      const response = await axiosInstance.post(
         `/tests/cancel/${appointmentId}`,
         {},
         {
@@ -50,43 +53,45 @@ const TestAppointment = () => {
   };
 
   return (
-    <div>
-      <h2 className="text-3xl font-semibold text-gray-800 text-center">
+    <div className="container mx-auto p-6 bg-white rounded-lg shadow-xl mt-6">
+      <h2 className="text-3xl font-semibold text-center text-gray-800 mb-8">
         Test Appointments
       </h2>
 
       {loading ? (
-        <p>Loading...</p>
+        <div className="flex justify-center items-center">
+          <div className="animate-spin h-10 w-10 border-t-2 border-blue-500 rounded-full"></div>
+        </div>
       ) : (
-        <div className="overflow-x-auto mt-6">
-          <table className="min-w-full bg-white border border-gray-300 rounded-lg shadow-md">
-            <thead>
+        <div className="overflow-x-auto bg-gray-50 shadow-md rounded-lg">
+          <table className="min-w-full bg-white border-separate border border-gray-200 rounded-lg">
+            <thead className="bg-[#47ccc8] text-black">
               <tr>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">
+                <th className="px-6 py-3 text-left text-sm font-semibold text-black">
                   Test Name
                 </th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">
+                <th className="px-6 py-3 text-left text-sm font-semibold text-black">
                   Test Category
                 </th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">
+                <th className="px-6 py-3 text-left text-sm font-semibold text-black">
                   Test Date
                 </th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">
+                <th className="px-6 py-3 text-left text-sm font-semibold text-black">
                   Test Time
                 </th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">
+                <th className="px-6 py-3 text-left text-sm font-semibold text-black">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">
+                <th className="px-6 py-3 text-left text-sm font-semibold text-black">
                   Action
                 </th>
               </tr>
             </thead>
             <tbody>
-              {appointments.map((appointment) => (
-                <tr key={appointment._id} className="border-b border-gray-200">
+              {appointments?.map((appointment) => (
+                <tr key={appointment._id} className="border-b hover:bg-gray-50">
                   <td className="px-6 py-4 text-sm text-gray-800">
-                    {appointment.testId.name}
+                    {appointment?.testId.name}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-800">
                     {appointment.testId.category}
@@ -112,7 +117,7 @@ const TestAppointment = () => {
                     {appointment.status === "pending" && (
                       <button
                         onClick={() => cancelAppointment(appointment._id)}
-                        className="px-4 py-2 text-white bg-red-500 rounded-md hover:bg-red-700"
+                        className="px-4 py-2 text-white bg-red-500 rounded-md hover:bg-red-700 transition-colors duration-300"
                       >
                         Cancel
                       </button>
@@ -122,7 +127,7 @@ const TestAppointment = () => {
                         onClick={() =>
                           alert("Invoice generation functionality")
                         }
-                        className="px-4 py-2 text-white bg-green-500 rounded-md hover:bg-green-700 ml-2"
+                        className="ml-2 px-4 py-2 text-white bg-green-500 rounded-md hover:bg-green-700 transition-colors duration-300"
                       >
                         Generate Invoice
                       </button>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import useAxios from "../../Hook/useAxios";
+import axiosInstance from "../../Hook/useAxios";
 import Swal from "sweetalert2";
 import { getAccessToken } from "../../../Utils";
 
@@ -17,7 +17,9 @@ export default function Appointments() {
   useEffect(() => {
     const fetchDoctorDetails = async () => {
       try {
-        const response = await useAxios.get(`/doctor/doctor-details/${docId}`);
+        const response = await axiosInstance.get(
+          `/doctor/doctor-details/${docId}`
+        );
         if (response.data?.doctor) {
           setDoctor(response.data.doctor);
           setAvailableSlots(response.data.doctor.slots_booked || []);
@@ -72,7 +74,7 @@ export default function Appointments() {
       const token = getAccessToken();
 
       // Send booking request
-      const response = await useAxios.post(
+      const response = await axiosInstance.post(
         `/users/book-appointment`,
         {
           userId: localStorage.getItem("userId"),
@@ -142,7 +144,7 @@ export default function Appointments() {
       <div className="bg-white shadow rounded-lg p-8 flex flex-col md:flex-row gap-8">
         <div className="md:w-1/3">
           <img
-            src={doctor.image || "/placeholder.jpg"}
+            src={doctor.profileImage || "/placeholder.jpg"}
             alt={`Dr. ${doctor.name}`}
             className="w-full h-80 object-cover rounded-lg shadow-md"
           />

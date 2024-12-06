@@ -1,15 +1,9 @@
 const jwt = require("jsonwebtoken");
 const userModel = require("../models/userModel");
-const doctorModel = require("../models/doctorModel");
 
 const authenticationRole = (roles) => {
   return async (req, res, next) => {
-    // Extract token from Authorization header
     const token = req.header("Authorization")?.replace("Bearer ", "");
-    console.log("Extracted Token:", token);
-    console.log("Headers received on backend:", req.headers);
-
-    // If no token is provided, return a 401 error
     if (!token) {
       return res
         .status(401)
@@ -20,14 +14,8 @@ const authenticationRole = (roles) => {
       // Verify the JWT token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      // Check which model the user belongs to (Doctor, Admin, or User)
-      let user;
-
-      if (decoded.role === "doctor") {
-        user = await doctorModel.findById(decoded.id); // Find doctor by ID
-      } else {
-        user = await userModel.findById(decoded.id); // Find user by ID
-      }
+      // Find the user in the database by ID
+      const user = await userModel.findById(decoded.id);
 
       // If no user is found, return an error
       if (!user) {
@@ -47,10 +35,9 @@ const authenticationRole = (roles) => {
         });
       }
 
-      // Proceed to the next middleware or route handler
       next();
     } catch (error) {
-      // If token verification fails, handle error
+      // Handle token errors
       if (error.name === "TokenExpiredError") {
         return res
           .status(401)

@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import loginImg from "../../../src/assets/r.png";
 import Swal from "sweetalert2";
 import { useContext } from "react";
@@ -8,6 +8,8 @@ import { ClipLoader } from "react-spinners";
 export default function Login() {
   const { login, loading } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from || "/";
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -28,24 +30,22 @@ export default function Login() {
         timer: 2000,
       });
 
-      switch (userRole) {
-        case "admin":
-          navigate("/dashboard");
-          break;
-        case "doctor":
-          navigate("/dashboard");
-          break;
-        default:
-          navigate("/");
-      }
+      const redirectPath =
+        userRole === "admin" || userRole === "doctor" ? "/dashboard" : from;
+
+      navigate(redirectPath, { replace: true });
     } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        (error.message.includes("Network Error") &&
+          "Network Error. Please check your connection.") ||
+        "An unexpected error occurred. Please try again.";
+
       Swal.fire({
         position: "center",
         icon: "error",
         title: "Login failed",
-        text:
-          error.response?.data?.message ||
-          "An error occurred. Please try again.",
+        text: errorMessage,
         showConfirmButton: true,
       });
     }
@@ -58,7 +58,7 @@ export default function Login() {
           <img className="w-[700px]" src={loginImg} alt="Login" />
         </div>
         <div className="card bg-base-100 w-full max-w-xl shadow-2xl">
-          <form onSubmit={handleLogin} className="card-body">
+          <form onSubmit={handleLogin} className="card-body" disabled={loading}>
             <div className="form-control">
               <label className="label">
                 <span className="label-text">Email</span>
@@ -69,6 +69,7 @@ export default function Login() {
                 placeholder="email"
                 className="input input-bordered"
                 required
+                disabled={loading}
               />
             </div>
             <div className="form-control">
@@ -81,6 +82,7 @@ export default function Login() {
                 placeholder="password"
                 className="input input-bordered"
                 required
+                disabled={loading}
               />
             </div>
             <div className="form-control mt-6">
@@ -92,7 +94,7 @@ export default function Login() {
                 {loading ? (
                   <>
                     <ClipLoader loading={loading} size={20} />
-                    <span className="ml-2 text-black">Loging...</span>
+                    <span className="ml-2 text-black">Logging...</span>
                   </>
                 ) : (
                   "Login"

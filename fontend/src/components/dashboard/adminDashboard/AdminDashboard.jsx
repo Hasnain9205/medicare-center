@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import useAxios from "../../../Hook/useAxios";
+import axiosInstance from "../../../Hook/useAxios";
 import { getAccessToken } from "../../../../Utils";
 import { FaUserDoctor } from "react-icons/fa6";
 import { FaBook } from "react-icons/fa";
@@ -15,7 +15,7 @@ export default function AdminDashboard() {
     const fetchDashboardData = async () => {
       try {
         const token = getAccessToken();
-        const response = await useAxios.get("/admin/dashboard", {
+        const response = await axiosInstance.get("/admin/dashboard", {
           headers: { Authorization: `Bearer ${token}` },
         });
         console.log("object", response.data.dashData);
@@ -30,7 +30,7 @@ export default function AdminDashboard() {
     };
 
     fetchDashboardData();
-  }, [useAxios, navigate]);
+  }, [axiosInstance, navigate]);
 
   if (loading) {
     return <div>Loading...</div>;
@@ -95,7 +95,7 @@ export default function AdminDashboard() {
                 <div className="flex items-center space-x-4">
                   <div>
                     <img
-                      src={appointment.docId?.image}
+                      src={appointment.docId?.profileImage}
                       alt={appointment.docId?.name}
                       className="w-14 h-14 rounded-full object-cover"
                     />

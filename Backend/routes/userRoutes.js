@@ -9,6 +9,7 @@ const {
   updateRole,
   getAppointment,
   getUsers,
+  refreshToken,
 } = require("../controllers/userController");
 const { authenticationRole } = require("../middlewares/authenticationRole");
 const upload = require("../middlewares/multer");
@@ -17,6 +18,7 @@ const userRouter = express.Router();
 
 userRouter.post("/register", upload.single("profileImage"), registerUser);
 userRouter.post("/login", loginUser);
+userRouter.post("/refreshToken", refreshToken);
 userRouter.get(
   "/profile",
   authenticationRole(["user", "admin", "doctor"]),

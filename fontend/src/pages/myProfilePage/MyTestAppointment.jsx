@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import useAxios from "../../Hook/useAxios";
+import axiosInstance from "../../Hook/useAxios";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2"; // Import SweetAlert2 for alerts
 import { getAccessToken } from "../../../Utils";
@@ -16,9 +16,12 @@ export const MyTestAppointment = () => {
     const fetchAppointments = async () => {
       try {
         const token = getAccessToken();
-        const response = await useAxios.get("/tests/get-test-appointment", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await axiosInstance.get(
+          "/tests/get-test-appointment",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         if (response.data.testAppointments) {
           setAppointments(response.data.testAppointments);
         } else {
@@ -37,57 +40,43 @@ export const MyTestAppointment = () => {
     fetchAppointments();
   }, []);
 
-  // Calculate total unpaid amount
-  const totalAmount = appointments.reduce((total, appointment) => {
-    const price = parseFloat(appointment.testId?.price);
-    if (!isNaN(price) && appointment.paymentStatus === "unpaid") {
-      return total + price;
-    }
-    return total;
-  }, 0);
-  console.log(totalAmount);
+  // Calculate total amount for unpaid appointments
+  const totalAmount = appointments.reduce(
+    (sum, appointment) =>
+      appointment.paymentStatus === "unpaid"
+        ? sum + appointment.testId.price
+        : sum,
+    0
+  );
 
   // Handle payment for unpaid appointments
   const handlePayTotal = () => {
     const unpaidAppointments = appointments.filter(
       (appointment) => appointment.paymentStatus === "unpaid"
     );
-    navigate("/testPayment", { state: { totalAmount, unpaidAppointments } });
+    navigate("/testPayment", { state: { unpaidAppointments } });
   };
 
-  // Cancel an appointment
-  const cancelAppointment = async (appointmentId) => {
-    Swal.fire({
-      title: "Are you sure?",
-      text: "You won't be able to revert this!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Yes, cancel it!",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          const token = getAccessToken();
-          const response = await useAxios.post(
-            `/tests/cancel/${appointmentId}`,
-            {},
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
-
-          setAppointments((prevAppointments) =>
-            prevAppointments.filter(
-              (appointment) => appointment._id !== appointmentId
-            )
-          );
-
-          Swal.fire("Cancelled!", response.data.message, "success");
-        } catch (err) {
-          console.error("Error cancelling appointment:", err);
-          Swal.fire("Error!", "Failed to cancel appointment.", "error");
-        }
-      }
+  // Generate invoices for all appointments
+  const generateInvoices = () => {
+    const invoices = appointments.map((appointment) => {
+      return {
+        testName: appointment.testId.name,
+        category: appointment.testId.category,
+        date: format(new Date(appointment.appointmentDate), "MMM dd, yyyy"),
+        time: appointment.appointmentTime,
+        price: appointment.testId.price,
+        paymentStatus: appointment.paymentStatus,
+      };
     });
+
+    Swal.fire({
+      title: "Invoices Generated!",
+      text: `Generated invoices for ${invoices.length} appointments.`,
+      icon: "success",
+    });
+    console.log("Generated Invoices:", invoices);
+    // Optionally, send this data to the server or create a PDF from the data
   };
 
   if (loading) return <div className="text-center">Loading...</div>;
@@ -113,12 +102,22 @@ export const MyTestAppointment = () => {
           onClick={handlePayTotal}
           className={`px-6 py-2 rounded-lg ${
             totalAmount > 0
-              ? "bg-blue-600 text-white hover:bg-blue-700 transition"
+              ? "bg-[#47ccc8] font-bold hover:bg-blue-900 hover:text-white transition"
               : "bg-gray-400 text-gray-800 cursor-not-allowed"
           }`}
           disabled={totalAmount === 0}
         >
           Pay Total
+        </button>
+      </div>
+
+      {/* New button to generate invoices for all appointments */}
+      <div className="mb-6 text-center">
+        <button
+          onClick={generateInvoices}
+          className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+        >
+          Generate All Invoices
         </button>
       </div>
 
@@ -132,7 +131,8 @@ export const MyTestAppointment = () => {
               <th className="py-3 px-6 text-left text-gray-600">Time</th>
               <th className="py-3 px-6 text-left text-gray-600">Price</th>
               <th className="py-3 px-6 text-left text-gray-600">Payment</th>
-              <th className="py-3 px-6 text-center text-gray-600">Actions</th>
+              <th className="py-3 px-6 text-center text-gray-600">Cancel</th>
+              <th className="py-3 px-6 text-center text-gray-600">Invoice</th>
             </tr>
           </thead>
           <tbody>
@@ -168,11 +168,34 @@ export const MyTestAppointment = () => {
                       Cancel
                     </button>
                   ) : (
+                    <div className="flex gap-2">
+                      <button
+                        className="px-6 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed"
+                        disabled
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </td>
+                <td className="py-4 px-6 text-center">
+                  {appointment.paymentStatus === "paid" ||
+                  appointment.paymentStatus === "unpaid" ? (
+                    <button
+                      className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+                      onClick={() => {
+                        // Logic for generating a single invoice
+                        generateInvoices();
+                      }}
+                    >
+                      Generate Invoice
+                    </button>
+                  ) : (
                     <button
                       className="px-6 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed"
                       disabled
                     >
-                      Cancel
+                      Generate Invoice
                     </button>
                   )}
                 </td>

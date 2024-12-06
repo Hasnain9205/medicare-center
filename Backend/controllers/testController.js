@@ -6,30 +6,49 @@ const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 // Create Test
 exports.createTest = async (req, res) => {
   try {
-    const { name, category, price, description } = req.body;
-    if (!name || !category || !price || !description) {
-      return res.status(400).json({ message: "All fields are required" });
+    console.log(req.body);
+    const { name, category, price, description, image } = req.body;
+
+    // Validate if the required fields are present
+    if (!name || !category || !price || !description || !image) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "All fields (name, category, price, description, image) are required",
+      });
     }
 
-    if (!req.file) {
-      return res.status(400).json({ message: "Image is required" });
+    // Validate price (ensure it's a positive number)
+    if (price <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Price must be a positive number",
+      });
     }
 
+    // Create the new test document in the database
     const newTest = await testModel.create({
       name,
-      image: req.file.path, // Assume middleware handles file uploads
       category,
       price,
       description,
+      image,
     });
 
-    res
-      .status(201)
-      .json({ message: "Test created successfully", test: newTest });
+    // Send success response with the newly created test
+    res.status(201).json({
+      success: true,
+      message: "Test created successfully",
+      data: newTest,
+    });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error creating test", error: error.message });
+    // Handle any errors that occur during the process
+    console.error("Error creating test:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while creating the test",
+      error: error.message,
+    });
   }
 };
 
@@ -108,8 +127,8 @@ exports.cancelTest = async (req, res) => {
         message: "Cannot cancel an appointment that is already paid.",
       });
     }
-
     appointment.status = "cancelled";
+    appointment.paymentStatus = "cancelled";
     await appointment.save();
 
     res

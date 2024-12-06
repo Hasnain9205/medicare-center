@@ -1,11 +1,11 @@
 const appointmentModel = require("../models/appointmentModel");
-const doctorModel = require("../models/doctorModel");
+const userModel = require("../models/userModel");
 
 // get doctorDetails api
 exports.doctorDetails = async (req, res) => {
   try {
     const docId = req.params.id;
-    const doctor = await doctorModel.findById(docId);
+    const doctor = await userModel.findById(docId);
     if (!doctor) {
       return res.status(404).json({ msg: "Doctor not found" });
     }
@@ -26,19 +26,30 @@ exports.doctorDetails = async (req, res) => {
   }
 };
 
+//All doctor list
 exports.doctorList = async (req, res) => {
   try {
-    const doctors = await doctorModel.find({}).select("-password -email");
-    return res
-      .status(200)
-      .json({ msg: "Doctor list get successfully", doctors });
+    const doctors = await userModel
+      .find({ role: "doctor" })
+      .select("-password -email")
+      .sort({ name: 1 });
+    if (!doctors || doctors.length === 0) {
+      return res.status(404).json({ msg: "No doctors found" });
+    }
+    return res.status(200).json({
+      msg: "Doctor list fetched successfully",
+      doctors,
+    });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    console.error(error);
+    return res.status(500).json({
+      msg: "Failed to fetch doctors. Please try again later.",
+      error: error.message,
+    });
   }
 };
 
-//get doctor appointments
-
+//doctor appointment
 exports.doctorAppointment = async (req, res) => {
   try {
     // Get docId from query parameters
@@ -61,14 +72,40 @@ exports.doctorAppointment = async (req, res) => {
         .status(404)
         .json({ message: "No appointments found for this doctor" });
     }
-
-    // Return the fetched appointments
     return res.status(200).json({
       msg: "Appointments fetched successfully",
       appointment: appointments,
     });
   } catch (error) {
     console.error("Error fetching appointments:", error);
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+//get patient by userId
+exports.uniquePatients = async (req, res) => {
+  try {
+    const { docId } = req.query;
+    if (!docId) {
+      return res.status(400).json({ message: "Invalid or missing Doctor ID" });
+    }
+
+    console.log("Received docId:", docId);
+
+    const appointments = await appointmentModel.find({ docId });
+    const uniquePatientIds = [
+      ...new Set(
+        appointments?.map((appointment) => appointment.userId.toString())
+      ),
+    ];
+    const uniquePatients = await userModel.find({
+      _id: { $in: uniquePatientIds },
+    });
+    res
+      .status(200)
+      .json({ msg: "unique patients get successfully", uniquePatients });
+  } catch (error) {
+    console.error("Error fetching uniquePatient:", error);
     return res.status(500).json({ message: error.message });
   }
 };
@@ -134,11 +171,18 @@ exports.doctorDashboard = async (req, res) => {
   try {
     const { docId } = req.query;
     if (!docId) {
-      return res.status(400).json({ message: "Doctor ID is required" });
+      return res.status(400).json({ message: "Invalid or missing Doctor ID" });
     }
+
     const appointments = await appointmentModel
       .find({ docId })
       .sort({ slotDate: -1 });
+
+    if (appointments.length === 0) {
+      return res
+        .status(200)
+        .json({ msg: "No appointments found", dashData: {} });
+    }
     let earnings = 0;
     const patients = new Set();
     appointments.forEach((appointment) => {
@@ -173,7 +217,7 @@ exports.doctorDashboard = async (req, res) => {
 exports.doctorProfile = async (req, res) => {
   try {
     const { docId } = req.body;
-    const profileData = await doctorModel.findById(docId).select("-password");
+    const profileData = await userModel.findById(docId).select("-password");
     return res
       .status(200)
       .json({ msg: "Doctor profile get successfully", profileData });
@@ -187,7 +231,7 @@ exports.doctorProfile = async (req, res) => {
 exports.updateDoctorProfile = async (req, res) => {
   try {
     const { docId, fees, address, available } = req.body;
-    await doctorModel.findByIdAndUpdate(docId, { fees, address, available });
+    await userModel.findByIdAndUpdate(docId, { fees, address, available });
     return res.status(200).json({ msg: "Doctor profile updated" });
   } catch (error) {
     return res.status(500).json({ message: error.message });

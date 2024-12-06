@@ -6,7 +6,7 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
-import useAxios from "../../Hook/useAxios"; // Custom hook for Axios
+import axiosInstance from "../../Hook/useAxios"; // Custom hook for Axios
 import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
@@ -43,7 +43,7 @@ const CheckoutForm = () => {
 
     // Request the payment intent from your backend
     setIsLoading(true);
-    useAxios
+    axiosInstance
       .post(
         "/tests/create-payment-intent",
         { unpaidAppointments },
@@ -109,7 +109,7 @@ const CheckoutForm = () => {
 
   const handlePaymentSuccess = async (paymentIntent) => {
     try {
-      await useAxios.post("/tests/payment-success", {
+      await axiosInstance.post("/tests/payment-success", {
         appointmentIds: unpaidAppointments.map((appt) => appt._id),
         sessionId: paymentIntent.id,
       });
@@ -135,7 +135,7 @@ const CheckoutForm = () => {
       </div>
       <button
         type="submit"
-        className="w-full py-3 mt-4 bg-blue-600 text-white font-semibold rounded-lg disabled:bg-gray-400"
+        className="w-full py-3 mt-4 bg-[#47ccc8] hover:bg-blue-950 hover:text-white font-semibold rounded-lg text-black disabled:bg-gray-400"
         disabled={!stripe || !clientSecret || isLoading}
       >
         {isLoading ? "Processing..." : "Pay Now"}

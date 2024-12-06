@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import useAxios from "../../Hook/useAxios";
+import axiosInstance from "../../Hook/useAxios";
 import Swal from "sweetalert2";
 
 const Success = () => {
   const [paymentDetails, setPaymentDetails] = useState(null);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const location = useLocation(); // Used to extract the query params
-  const navigate = useNavigate(); // Hook for navigation
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Extract sessionId and appointmentIds from the URL query parameters
@@ -18,7 +18,7 @@ const Success = () => {
     const fetchPaymentDetails = async () => {
       try {
         // Sending sessionId and appointmentIds to backend for payment validation and appointment updates
-        const response = await useAxios.post("/payment/success", {
+        const response = await axiosInstance.post("/payment/success", {
           appointmentId: appointmentIds.split(","),
           sessionId,
         });
@@ -91,7 +91,7 @@ const Success = () => {
             <div className="mt-6 text-center">
               <button
                 onClick={handleMyAppointments}
-                className="py-2 px-6 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="py-2 px-6 bg-[#47ccc8] hover:text-white rounded-lg hover:bg-blue-950"
               >
                 My Appointments
               </button>

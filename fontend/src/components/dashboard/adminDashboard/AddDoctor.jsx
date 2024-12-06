@@ -1,5 +1,5 @@
 import { useState } from "react";
-import useAxios from "../../../Hook/useAxios";
+import axiosInstance from "../../../Hook/useAxios";
 import Swal from "sweetalert2";
 import { getAccessToken } from "../../../../Utils";
 import { ClipLoader } from "react-spinners";
@@ -9,7 +9,7 @@ export default function AddDoctor() {
     name: "",
     email: "",
     password: "",
-    image: "",
+    profileImage: "",
     speciality: "",
     degree: "",
     experience: "",
@@ -23,6 +23,8 @@ export default function AddDoctor() {
     slotDate: "",
     slotTime: "",
   });
+
+  const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleInputChange = (e) => {
@@ -53,7 +55,7 @@ export default function AddDoctor() {
       if (data.secure_url) {
         setFormData((prevData) => ({
           ...prevData,
-          image: data.secure_url,
+          profileImage: data.secure_url,
         }));
         Swal.fire("Success", "Image uploaded successfully", "success");
       } else {
@@ -81,18 +83,29 @@ export default function AddDoctor() {
         availableSlots: [...formData.availableSlots, slot],
       });
       setSlot({ slotDate: "", slotTime: "" });
+      Swal.fire("Success", "Slot added successfully", "success");
     } else {
-      alert("Please enter both date and time for the slot.");
+      Swal.fire(
+        "Error",
+        "Please provide both date and time for the slot",
+        "error"
+      );
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage("");
+    if (formData.fees <= 0) {
+      Swal.fire("Error", "Fees must be a positive number", "error");
+      return;
+    }
     setLoading(true);
+
     console.log("Form Data before submission:", formData);
     try {
       const token = getAccessToken();
-      const response = await useAxios.post("/admin/add-doctor", formData, {
+      const response = await axiosInstance.post("/admin/add-doctor", formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
       console.log("data", formData);
@@ -102,7 +115,7 @@ export default function AddDoctor() {
           name: "",
           email: "",
           password: "",
-          image: "",
+          profileImage: "",
           speciality: "",
           degree: "",
           experience: "",
@@ -112,10 +125,14 @@ export default function AddDoctor() {
           slots_booked: [],
         });
       } else {
-        Swal.fire("Error", response.data.message, "error");
+        const errorMessage = setErrorMessage(response.data.message);
+        Swal.fire("Error", errorMessage, "error");
       }
     } catch (error) {
-      Swal.fire("Error", "Failed to add doctor", error);
+      const serverErrorMessage =
+        error.response?.data?.message || "Something went wrong!";
+      setErrorMessage(serverErrorMessage);
+      Swal.fire("Error", serverErrorMessage, "error");
     } finally {
       setLoading(false);
     }
@@ -190,9 +207,9 @@ export default function AddDoctor() {
           </label>
           <input
             type="file"
-            id="image"
-            name="image"
-            accept="image/*"
+            id="profileImage"
+            name="profileImage"
+            accept="profileImage/*"
             onChange={handleImageUpload}
             className="mt-1 p-2 w-full border rounded-lg"
           />

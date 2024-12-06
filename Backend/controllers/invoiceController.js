@@ -1,64 +1,50 @@
 const Invoice = require("../models/invoiceModel");
-const Test = require("../models/testModel");
-const userModel = require("../models/userModel");
 const PDFDocument = require("pdfkit");
-const fs = require("fs");
-const path = require("path");
 
 // Create invoice API
 exports.createInvoice = async (req, res) => {
+  const { userId, testAppointments } = req.body;
+
   try {
-    const { userId, testIds, dueDate } = req.body;
+    // Aggregate test details
+    const tests = testAppointments.map((appointment) => ({
+      test: appointment.testId,
+      testName: appointment.name,
+      testCategory: appointment.category,
+      price: appointment.price,
+    }));
 
-    // Fetch user and tests based on IDs
-    const user = await userModel.findById(userId);
-    const tests = await Test.find({ _id: { $in: testIds } });
+    const totalPrice = tests.reduce((total, item) => total + item.price, 0);
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 7);
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    if (!tests.length) {
-      return res.status(400).json({ message: "No valid tests selected" });
-    }
-
-    // Calculate total price
-    const totalPrice = tests.reduce((sum, test) => sum + test.price, 0);
-
-    // Create invoice
+    // Create and save the invoice
     const invoice = new Invoice({
       user: userId,
-      tests: tests.map((test) => ({
-        testName: test.name,
-        testCategory: test.category,
-        price: test.price,
-      })),
+      tests,
       totalPrice,
-      paymentStatus: "unpaid", // Default status
-      dueDate, // Due date for the invoice
+      dueDate,
     });
 
     await invoice.save();
-
     res.status(201).json({ message: "Invoice created successfully", invoice });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error creating invoice", error: error.message });
+    console.error("Error creating invoice:", error);
+    res.status(500).json({ message: "Failed to create invoice" });
   }
 };
 
 // Get all invoices API
 exports.getAllInvoices = async (req, res) => {
   try {
-    const invoices = await Invoice.find().populate("user", "name email");
-    return res
-      .status(200)
-      .json({ msg: "Get all invoices successfully", invoices });
+    const { userId } = req.query; // Pass userId as query parameter
+    const filter = userId ? { user: userId } : {};
+
+    const invoices = await Invoice.find(filter).populate("tests.test");
+    res.status(200).json({ invoices });
   } catch (error) {
-    return res
-      .status(500)
-      .json({ message: "Failed to get all invoices", error: error.message });
+    console.error("Error fetching invoices:", error);
+    res.status(500).json({ message: "Failed to fetch invoices" });
   }
 };
 
@@ -83,23 +69,21 @@ exports.getInvoiceByUserId = async (req, res) => {
 };
 
 exports.updateInvoice = async (req, res) => {
+  const { invoiceId } = req.params;
+
   try {
-    const { invoiceId } = req.params;
-    const updatedInvoice = await Invoice.findByIdAndUpdate(
+    const invoice = await Invoice.findByIdAndUpdate(
       invoiceId,
-      req.body,
+      { paymentStatus: "paid" },
       { new: true }
     );
-    if (!updatedInvoice) {
-      return res.status(404).json({ msg: "Invoice not found" });
-    }
-    res
-      .status(200)
-      .json({ msg: "Invoice updated successfully", invoice: updatedInvoice });
+
+    if (!invoice) return res.status(404).json({ message: "Invoice not found" });
+
+    res.status(200).json({ message: "Invoice marked as paid", invoice });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Failed to update invoice", error: error.message });
+    console.error("Error marking invoice as paid:", error);
+    res.status(500).json({ message: "Failed to update invoice status" });
   }
 };
 

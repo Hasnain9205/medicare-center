@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
-import useAxios from "../../Hook/useAxios";
+import axiosInstance from "../../Hook/useAxios";
 import { getAccessToken } from "../../../Utils";
 import { ClipLoader } from "react-spinners";
 
@@ -21,7 +21,7 @@ export default function UpdateProfile() {
     const fetchData = async () => {
       const token = getAccessToken();
       try {
-        const response = await useAxios.get("/users/profile", {
+        const response = await axiosInstance.get("/users/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setFormData(response.data.user);
@@ -92,12 +92,16 @@ export default function UpdateProfile() {
 
     try {
       const token = getAccessToken();
-      const response = await useAxios.put("/users/update-profile", formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await axiosInstance.put(
+        "/users/update-profile",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (response.data.success) {
         Swal.fire("Success", "Profile updated successfully", "success");

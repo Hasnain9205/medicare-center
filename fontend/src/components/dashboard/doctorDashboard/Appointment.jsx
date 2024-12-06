@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { MdCancel, MdCheckCircle } from "react-icons/md"; // Import icons
-import useAxios from "../../../Hook/useAxios";
+import axiosInstance from "../../../Hook/useAxios";
 import { getAccessToken } from "../../../../Utils";
 import Swal from "sweetalert2";
 
@@ -13,7 +13,7 @@ const Appointment = () => {
       const token = getAccessToken();
       const docId = localStorage.getItem("userId");
 
-      const response = await useAxios.get("/doctor/appointment-doctor", {
+      const response = await axiosInstance.get("/doctor/appointment-doctor", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -43,7 +43,7 @@ const Appointment = () => {
 
       console.log("Doctor ID from localStorage: ", docId);
 
-      const response = await useAxios.patch(
+      const response = await axiosInstance.patch(
         "/doctor/cancel-appointment",
         { appointmentId, docId },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -75,7 +75,7 @@ const Appointment = () => {
 
       console.log("Doctor ID from localStorage: ", docId);
 
-      const response = await useAxios.patch(
+      const response = await axiosInstance.patch(
         "/doctor/complete-appointment",
         { appointmentId, docId },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -101,17 +101,20 @@ const Appointment = () => {
 
   return (
     <div>
-      <h2 className="text-3xl font-semibold text-gray-800 text-center">
+      <h2 className="text-3xl font-semibold  text-center">
         Doctors Appointment
       </h2>
+      <h1 className="text-blue-700 font-bold text-xl">
+        Total Patients: {appointments.length}
+      </h1>
       {loading ? (
         <p>Loading...</p>
       ) : appointments.length === 0 ? (
         <p className="text-center text-gray-600">No appointments found.</p>
       ) : (
         <div className="overflow-x-auto mt-6">
-          <table className="min-w-full bg-white border border-gray-300 rounded-lg shadow-md">
-            <thead>
+          <table className="w-full border-collapse bg-white shadow-lg rounded-lg overflow-hidden">
+            <thead className="bg-[#47ccc8]">
               <tr>
                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">
                   Patient
@@ -134,8 +137,13 @@ const Appointment = () => {
               </tr>
             </thead>
             <tbody>
-              {appointments.map((appointment) => (
-                <tr key={appointment._id} className="border-b border-gray-200">
+              {appointments.map((appointment, index) => (
+                <tr
+                  key={appointment._id}
+                  className={`${
+                    index % 2 === 0 ? "bg-gray-100" : "bg-white"
+                  } hover:bg-blue-100`}
+                >
                   <td className="px-6 py-4 text-sm text-gray-800">
                     {appointment.userData?.name || "N/A"}
                   </td>

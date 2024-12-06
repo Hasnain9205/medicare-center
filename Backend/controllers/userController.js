@@ -2,7 +2,6 @@ const userModel = require("../models/userModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const validator = require("validator");
-const doctorModel = require("../models/doctorModel");
 const appointmentModel = require("../models/appointmentModel");
 const cloudinary = require("cloudinary").v2;
 
@@ -14,6 +13,13 @@ exports.registerUser = async (req, res) => {
     }
     if (!validator.isEmail(email)) {
       return res.status(400).json({ msg: "Enter a valid email" });
+    }
+    if (!validator.isMobilePhone(phone, "any")) {
+      return res.status(400).json({ msg: "Enter a valid phone number" });
+    }
+
+    if (!validator.isDate(dob)) {
+      return res.status(400).json({ msg: "Enter a valid date of birth" });
     }
     if (password.length < 8) {
       return res.status(400).json({ msg: "Password must be at 8 characters" });
@@ -62,7 +68,7 @@ exports.loginUser = async (req, res) => {
       return res.status(400).json({ msg: "Email and password are required" });
     }
 
-    let user = await doctorModel.findOne({ email });
+    let user = await userModel.findOne({ role: "doctors" });
     if (!user) {
       // If not admin, check if the user is a general user
       user = await userModel.findOne({ email });
@@ -79,12 +85,16 @@ exports.loginUser = async (req, res) => {
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
       {
-        expiresIn: "15m",
+        expiresIn: "1m",
       }
     );
-    const refreshToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const refreshToken = jwt.sign(
+      { id: user._id },
+      process.env.REFRESH_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
     res
       .status(200)
       .json({ msg: "Login successfully", user, accessToken, refreshToken });
@@ -93,11 +103,42 @@ exports.loginUser = async (req, res) => {
   }
 };
 
+exports.refreshToken = async (req, res) => {
+  const { refreshToken } = req.body; // Get the refresh token from request body
+
+  if (!refreshToken) {
+    return res.status(401).json({ msg: "No refresh token provided" });
+  }
+
+  try {
+    // Verify the refresh token
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
+    const user = await userModel.findById(decoded.id);
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    // Generate a new access token
+    const newAccessToken = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" } // Expiry for new access token
+    );
+
+    // Send new access token to the client
+    res.status(200).json({ accessToken: newAccessToken });
+  } catch (error) {
+    console.error(error);
+    return res.status(401).json({ msg: "Invalid or expired refresh token" });
+  }
+};
+
 //get user Profile api
 
 exports.getUserProfile = async (req, res) => {
   try {
     const userId = req.user.id;
+    console.log("userId==========>", userId);
     const user = await userModel.findById(userId).select("-password");
     if (!user) {
       return res.status(404).json({ msg: "User not found" });
@@ -163,7 +204,7 @@ exports.bookAppointment = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const doctor = await doctorModel.findById(docId);
+    const doctor = await userModel.findById(docId);
     const user = await userModel.findById(userId);
 
     if (!doctor) {
@@ -291,7 +332,7 @@ exports.cancelAppointment = async (req, res) => {
 exports.updateRole = async (req, res) => {
   try {
     const { role } = req.body;
-    const validRoles = ["doctor", "diagnostic", "admin"];
+    const validRoles = ["doctor", "diagnostic", "admin", "user"];
     if (!validRoles.includes(role)) {
       return res.status(400).json({ msg: "Invalid role Specified" });
     }

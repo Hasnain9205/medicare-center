@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import useAxios from "../../Hook/useAxios";
+import axiosInstance from "../../Hook/useAxios";
 import { getAccessToken } from "../../../Utils";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2"; // Import SweetAlert2
@@ -14,7 +14,7 @@ const MyAppointments = () => {
     const fetchAppointments = async () => {
       try {
         const token = getAccessToken();
-        const response = await useAxios.get("/users/appointments", {
+        const response = await axiosInstance.get("/users/appointments", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (response.data.appointments) {
@@ -52,7 +52,7 @@ const MyAppointments = () => {
     if (window.confirm("Are you sure you want to cancel this appointment?")) {
       try {
         const token = getAccessToken();
-        const response = await useAxios.delete(
+        const response = await axiosInstance.delete(
           `/users/appointments/${appointmentId}`,
           {
             headers: {
@@ -152,7 +152,7 @@ const MyAppointments = () => {
                   </span>
                 </td>
                 <td className="py-4 px-6 text-center">
-                  {appointment.paymentStatus === "Unpaid" ? (
+                  {appointment.status === "pending" ? (
                     <button
                       className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
                       onClick={() => cancelAppointment(appointment._id)}

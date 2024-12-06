@@ -22,7 +22,7 @@ const testAppointmentModel = new mongoose.Schema(
     },
     paymentStatus: {
       type: String,
-      enum: ["paid", "unpaid"],
+      enum: ["paid", "unpaid", "cancelled"],
       default: "unpaid",
     },
     status: {

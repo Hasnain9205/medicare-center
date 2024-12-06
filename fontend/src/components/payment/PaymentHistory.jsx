@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import useAxios from "../../Hook/useAxios";
+import axiosInstance from "../../Hook/useAxios";
 import { getAccessToken } from "../../../Utils";
 
 const PaymentHistory = () => {
@@ -9,7 +9,7 @@ const PaymentHistory = () => {
     const fetchPayments = async () => {
       try {
         const token = getAccessToken();
-        const { data } = await useAxios.get("/payment/history", {
+        const { data } = await axiosInstance.get("/payment/history", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setPayments(data.payments);

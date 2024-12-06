@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import useAxios from "../../Hook/useAxios";
+import axiosInstance from "../../Hook/useAxios";
 import { getAccessToken } from "../../../Utils";
 import { useNavigate } from "react-router-dom";
 
@@ -8,24 +8,23 @@ export default function TopDoctors() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const Doctor = async () => {
+    const fetchDoctors = async () => {
       try {
-        const res = await useAxios.get("/doctor/doctors-list");
+        const res = await axiosInstance.get("/doctor/doctors-list");
         setDoctors(res.data.doctors);
         console.log(res.data);
       } catch (error) {
         console.log("get doctor error", error);
       }
     };
-    Doctor();
+    fetchDoctors();
   }, []);
-
-  const handleBookDoctor = (doctorId) => {
+  const handleBookDoctor = (docId) => {
     const token = getAccessToken();
     if (!token) {
-      navigate("/login");
+      navigate("/login", { state: { from: `/appointments/${docId}` } });
     } else {
-      navigate(`appointments/${doctorId}`);
+      navigate(`/appointments/${docId}`);
     }
   };
 
@@ -49,7 +48,7 @@ export default function TopDoctors() {
           >
             <figure>
               <img
-                src={doctor.image}
+                src={doctor.profileImage}
                 alt={doctor.name}
                 className="w-full h-48 object-cover"
               />
@@ -69,7 +68,7 @@ export default function TopDoctors() {
               <div className="card-actions justify-end">
                 <button
                   onClick={() => handleBookDoctor(doctor._id)}
-                  className="btn bg-[#47ccc8] hover:bg-blue-950 hover:text-white  w-full"
+                  className="btn bg-[#47ccc8] hover:bg-blue-950 hover:text-white w-full"
                 >
                   Book Appointment
                 </button>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import useAxios from "../../Hook/useAxios";
+import axiosInstance from "../../Hook/useAxios";
 import { getAccessToken } from "../../../Utils";
 
 const TestDetails = () => {
@@ -14,9 +14,12 @@ const TestDetails = () => {
     const fetchTestDetails = async () => {
       try {
         const token = getAccessToken();
-        const response = await useAxios.get(`/tests/test-by-id/${testId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await axiosInstance.get(
+          `/tests/test-by-id/${testId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         setTest(response.data.test);
       } catch (error) {
         Swal.fire({
@@ -66,7 +69,7 @@ const TestDetails = () => {
         return navigate("/login");
       }
 
-      const response = await useAxios.post(
+      const response = await axiosInstance.post(
         "/tests/book-test",
         { testId, userId, appointmentDate, appointmentTime },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -118,7 +121,7 @@ const TestDetails = () => {
       </div>
       <button
         onClick={bookTest}
-        className="mt-6 w-full bg-blue-600 text-white py-2 rounded-md shadow-md hover:bg-blue-700 transition duration-300"
+        className="mt-6 w-full bg-[#47ccc8] font-bold hover:text-white py-2 rounded-md shadow-md hover:bg-blue-950 transition duration-300"
       >
         Book Test
       </button>

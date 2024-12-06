@@ -11,6 +11,8 @@ import ManageRole from "./adminDashboard/ManageRole";
 import TestAppointment from "./adminDashboard/TestAppointment";
 import DoctorDashboard from "./doctorDashboard/DoctorDashboard";
 import Appointment from "./doctorDashboard/Appointment";
+import DoctorList from "./doctorDashboard/DoctorList";
+import AllPatients from "./doctorDashboard/AllPatients";
 
 const rolePages = {
   admin: {
@@ -26,6 +28,8 @@ const rolePages = {
   doctor: {
     doctorDashboard: <DoctorDashboard />,
     appointment: <Appointment />,
+    doctorList: <DoctorList />,
+    allPatient: <AllPatients />,
   },
 };
 
@@ -36,12 +40,11 @@ export default function Dashboard() {
 
   // Check user authentication and role
   useEffect(() => {
-    if (!loading && !user) {
-      navigate("/login");
-    } else if (!loading && user) {
-      if (user.role === "admin") {
+    console.log("user----->", loading, user);
+    if (!loading && user) {
+      if (user?.role === "admin") {
         setCurrentPage("adminDashboard"); // Set default page for admin
-      } else if (user.role === "doctor") {
+      } else if (user?.role === "doctor") {
         setCurrentPage("doctorDashboard"); // Set default page for doctor
       } else {
         navigate("/login");
@@ -114,8 +117,8 @@ export default function Dashboard() {
                 {[
                   "doctorDashboard",
                   "appointment",
-                  "updateAvailability",
-                  "testRequests",
+                  "doctorList",
+                  "allPatient",
                 ].map((page) => (
                   <Link
                     to="#"

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import useAxios from "../../Hook/useAxios";
+import axiosInstance from "../../Hook/useAxios";
 import { getAccessToken } from "../../../Utils";
 export default function Doctors() {
   const [doctors, setDoctors] = useState([]);
@@ -11,7 +11,7 @@ export default function Doctors() {
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const res = await useAxios.get("/doctor/doctors-list");
+        const res = await axiosInstance.get("/doctor/doctors-list");
         setDoctors(res.data.doctors);
         console.log(res.data.doctors);
       } catch (error) {
@@ -52,7 +52,7 @@ export default function Doctors() {
             className="card bg-white shadow-lg rounded-md p-4"
           >
             <img
-              src={doctor.image}
+              src={doctor.profileImage}
               alt={doctor.name}
               className="w-full h-48 object-cover"
             />

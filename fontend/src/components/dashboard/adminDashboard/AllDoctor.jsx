@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import useAxios from "../../../Hook/useAxios";
+import axiosInstance from "../../../Hook/useAxios";
 import Swal from "sweetalert2";
 import { getAccessToken } from "../../../../Utils";
 import { ClipLoader } from "react-spinners";
@@ -14,7 +14,7 @@ export default function AllDoctor() {
   const fetchDoctors = async () => {
     try {
       const token = getAccessToken();
-      const response = await useAxios.get("/admin/doctors", {
+      const response = await axiosInstance.get("/admin/doctors", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setDoctors(response.data.doctors || []);
@@ -44,7 +44,7 @@ export default function AllDoctor() {
       if (result.isConfirmed) {
         try {
           const token = getAccessToken();
-          await useAxios.delete(`/admin/delete-doctor/${doctorId}`, {
+          await axiosInstance.delete(`/admin/delete-doctor/${doctorId}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           setDoctors((prevDoctors) =>
@@ -113,7 +113,7 @@ export default function AllDoctor() {
       };
 
       const token = getAccessToken();
-      const response = await useAxios.put(
+      const response = await axiosInstance.put(
         `/admin/update-doctor/${currentDoctor._id}`,
         updatedDoctor,
         {

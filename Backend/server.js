@@ -4,11 +4,11 @@ require("dotenv").config();
 const connectDB = require("./config/mongodb");
 const connectCloudinary = require("./config/cloudinary");
 const adminRouter = require("./routes/adminROutes");
-const userRouter = require("./routes/userRoutes");
 const doctorRouter = require("./routes/doctorRoutes");
 const testRouter = require("./routes/testRoutes");
 const paymentRouter = require("./routes/paymentRoutes");
 const invoiceRouter = require("./routes/invoiceRoutes");
+const userRouter = require("./routes/userRoutes");
 
 const app = express();
 const port = process.env.PORT || 5001;
@@ -17,7 +17,14 @@ connectDB();
 connectCloudinary();
 
 app.use(express.json());
-app.use(cors());
+const corsOptions = {
+  origin: "http://localhost:5173",
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 
 //api endpoints
 app.use("/api/admin", adminRouter);
@@ -28,7 +35,7 @@ app.use("/api/invoice", invoiceRouter);
 app.use("/api/payment", paymentRouter);
 
 app.get("/", (req, res) => {
-  res.send("Running Api in port");
+  res.send("API working!");
 });
 
 app.listen(port, () => {

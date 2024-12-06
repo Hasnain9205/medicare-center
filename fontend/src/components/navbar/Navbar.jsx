@@ -237,7 +237,7 @@ export default function Navbar() {
                   <div className="flex items-center p-3 -mt-2">
                     <img
                       className="flex-shrink-0 object-cover mx-1 rounded-full w-9 h-9"
-                      src={user.profileImage || profile}
+                      src={user.profileImage || user.image || profile}
                       alt="Profile"
                     />
                     <div className="mx-1">

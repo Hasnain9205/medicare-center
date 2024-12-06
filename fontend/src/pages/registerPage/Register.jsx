@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import loginImg from "../../../src/assets/r.png";
-import axios from "../../Hook/useAxios";
+import axiosInstance from "../../Hook/useAxios";
 import Swal from "sweetalert2";
 import { useState } from "react";
 import { ClipLoader } from "react-spinners";
@@ -35,7 +35,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const { status } = await axios.post("/users/register", formData, {
+      const { status } = await axiosInstance.post("/users/register", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       if (status === 200) {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import useAxios from "../../Hook/useAxios";
+import axiosInstance from "../../Hook/useAxios";
 
 const CreateInvoice = () => {
   const [userId, setUserId] = useState("");
@@ -17,7 +17,7 @@ const CreateInvoice = () => {
     }
 
     try {
-      const response = await useAxios.post("/invoice/create-invoice", {
+      const response = await axiosInstance.post("/invoice/create-invoice", {
         userId,
         testIds,
         dueDate,

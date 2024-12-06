@@ -2,29 +2,30 @@ import { FaArrowRight } from "react-icons/fa6";
 import { useEffect, useState } from "react";
 import { getAccessToken } from "../../../Utils";
 import { useNavigate } from "react-router-dom";
-import useAxios from "../../Hook/useAxios";
+import axiosInstance from "../../Hook/useAxios";
 
 export default function AllTest() {
   const [tests, setTests] = useState([]);
   const navigate = useNavigate();
 
+  // Fetch Tests on Component Mount
   useEffect(() => {
-    const TestData = async () => {
+    const fetchTests = async () => {
       try {
-        const data = await useAxios.get("/tests/get-all-test");
-        setTests(data.data.tests);
-        console.log("test all", data.data);
+        const response = await axiosInstance.get("/tests/get-all-test");
+        setTests(response.data.tests);
+        console.log("Fetched tests:", response.data.tests);
       } catch (error) {
-        console.log("get tests error", error);
+        console.error("Error fetching tests:", error);
       }
     };
-    TestData();
+    fetchTests();
   }, []);
 
   const handleTestDetails = (testId) => {
     const token = getAccessToken();
     if (!token) {
-      navigate("/login");
+      navigate("/login", { state: { from: `/testDetails/${testId}` } });
     } else {
       navigate(`testDetails/${testId}`);
     }
@@ -44,7 +45,7 @@ export default function AllTest() {
       </p>
 
       <section className="mt-16 flex flex-wrap gap-6 justify-center">
-        {tests.slice(0, 9).map((test) => (
+        {tests.slice(0, 6).map((test) => (
           <div
             key={test._id}
             className="card card-compact p-6 bg-base-100 w-96 shadow-xl cursor-pointer flex-shrink-0 hover:translate-y-[-10px] transition-all duration-500"
@@ -56,13 +57,21 @@ export default function AllTest() {
             />
             <h2 className="text-2xl font-bold mb-2 mt-4">{test.name}</h2>
             <p className="text-gray-600 mb-4">{test.description}</p>
-            <div className="flex mb-4 items-center justify-between rounded-full pt-3 px-6 ">
-              <p className="text-green-600 mb-4 font-bold">
+            <div className="flex  items-center justify-between rounded-full pt-2 px-6 ">
+              <p className="text-green-600 mb-2 font-bold">
                 Price: {test.price}
               </p>
-              <p className="text-green-600 mb-4 font-bold">
+              <p className="text-green-600 mb-2 font-bold">
                 Category: {test.category}
               </p>
+            </div>
+            <div className="flex items-center  mb-2 px-2">
+              <p
+                className={`${
+                  test.status ? "bg-green-500" : "bg-red-500"
+                } w-3 h-3 rounded-full mr-2`}
+              ></p>
+              <p>{test.status ? "Available" : "Unavailable"}</p>
             </div>
             <button
               onClick={() => handleTestDetails(test._id)}

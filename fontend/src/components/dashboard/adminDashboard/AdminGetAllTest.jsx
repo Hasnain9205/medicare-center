@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import useAxios from "../../../Hook/useAxios";
+import axiosInstance from "../../../Hook/useAxios";
 import Swal from "sweetalert2";
 import { getAccessToken } from "../../../../Utils";
 import { ClipLoader } from "react-spinners";
@@ -13,7 +13,7 @@ export default function AdminGetAllTest() {
   // Fetch tests from the API
   const fetchTests = async () => {
     try {
-      const response = await useAxios.get("/tests/get-all-test");
+      const response = await axiosInstance.get("/tests/get-all-test");
       console.log("API Response:", response.data);
       setTests(response.data.tests || []); // Adjust according to API response structure
     } catch (error) {
@@ -42,7 +42,7 @@ export default function AdminGetAllTest() {
       if (result.isConfirmed) {
         try {
           const token = getAccessToken();
-          await useAxios.delete(`/tests/delete-test/${testId}`, {
+          await axiosInstance.delete(`/tests/delete-test/${testId}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           setTests((prevTests) =>
@@ -75,7 +75,7 @@ export default function AdminGetAllTest() {
       const updatedTest = { name, category, price, description };
 
       const token = getAccessToken();
-      const response = await useAxios.put(
+      const response = await axiosInstance.put(
         `/tests/update-test/${currentTest._id}`,
         updatedTest,
         {

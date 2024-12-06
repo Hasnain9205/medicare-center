@@ -1,6 +1,5 @@
 const bcrypt = require("bcrypt");
 const validator = require("validator");
-const doctorModel = require("../models/doctorModel");
 const appointmentModel = require("../models/appointmentModel");
 const userModel = require("../models/userModel");
 
@@ -17,11 +16,11 @@ exports.addDoctor = async (req, res) => {
       about,
       fees,
       address,
-      image,
+      profileImage,
       availableSlots,
     } = req.body;
 
-    if (!image) {
+    if (!profileImage) {
       return res
         .status(400)
         .json({ success: false, message: "Image URL is required" });
@@ -50,21 +49,27 @@ exports.addDoctor = async (req, res) => {
       });
     }
 
-    if (password.length < 8) {
+    const strongPassword =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!strongPassword.test(password)) {
       return res.status(400).json({
         success: false,
-        message: "Password must be at least 8 characters",
+        message:
+          "Password must contain at least 8 characters, including uppercase, lowercase, a number, and a special character",
       });
     }
-    const existingDoctor = await doctorModel.findOne({ email });
+
+    const existingDoctor = await userModel.findOne({ email, role: "doctor" });
     if (existingDoctor) {
       return res.status(400).json({
         success: false,
         message: "A doctor with this email already exists.",
       });
     }
+
     const salt = await bcrypt.genSalt(10);
     const hashPass = await bcrypt.hash(password, salt);
+
     const doctorData = {
       name,
       email,
@@ -75,27 +80,32 @@ exports.addDoctor = async (req, res) => {
       about,
       fees,
       address,
-      image,
+      profileImage,
       role: "doctor",
       date: Date.now(),
       slots_booked: [],
     };
 
-    // Save doctor data
-    const newDoctor = new doctorModel(doctorData);
+    const newDoctor = new userModel(doctorData);
     await newDoctor.save();
 
-    // Now add available slots for the doctor if provided
     if (availableSlots && availableSlots.length > 0) {
-      // Add slots to the doctor document
+      const isValidSlots = availableSlots.every(
+        (slot) => slot.slotDate && slot.slotTime
+      );
+      if (!isValidSlots) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid slot data provided" });
+      }
+
       const slots = availableSlots.map((slot) => ({
         slotDate: slot.slotDate,
         slotTime: slot.slotTime,
-        booked: false, // Initially, all slots are unbooked
+        booked: false,
       }));
 
-      // Update the doctor's slots_booked field
-      newDoctor.slots_booked = [...newDoctor.slots_booked, ...slots];
+      newDoctor.slots_booked.push(...slots);
       await newDoctor.save();
     }
 
@@ -105,7 +115,7 @@ exports.addDoctor = async (req, res) => {
       newDoctor,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error in addDoctor:", error.message);
     return res
       .status(500)
       .json({ success: false, message: "An error occurred, please try again" });
@@ -116,7 +126,7 @@ exports.addDoctor = async (req, res) => {
 
 exports.allDoctor = async (req, res) => {
   try {
-    const doctors = await doctorModel.find();
+    const doctors = await userModel.find({ role: "doctor" });
     return res
       .status(200)
       .json({ msg: "Get all doctor successfully", doctors });
@@ -129,7 +139,7 @@ exports.allDoctor = async (req, res) => {
 //get doctor by id
 exports.getDoctor = async (req, res) => {
   try {
-    const doctor = await doctorModel.findById(req.params.id);
+    const doctor = await userModel.findById(req.params.id);
     if (!doctor) {
       return res.status(404).json({ message: "Doctor not found" });
     }
@@ -163,7 +173,7 @@ exports.updateDoctor = async (req, res) => {
     }
 
     // Find the doctor by ID
-    const doctor = await doctorModel.findById(doctorId);
+    const doctor = await userModel.findById(doctorId);
     if (!doctor) {
       return res.status(404).json({ message: "Doctor not found" });
     }
@@ -203,7 +213,18 @@ exports.updateDoctor = async (req, res) => {
 exports.deleteDoctor = async (req, res) => {
   try {
     const { doctorId } = req.params;
-    const doctor = await doctorModel.findByIdAndDelete(doctorId);
+    const associatedAppointments = await appointmentModel.find({
+      docId: doctorId,
+    });
+    if (associatedAppointments) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          msg: "Cannot delete doctor with existing appointments",
+        });
+    }
+    const doctor = await userModel.findByIdAndDelete(doctorId);
     if (!doctor) {
       return res
         .status(404)
@@ -266,7 +287,7 @@ exports.appointmentCancelAdmin = async (req, res) => {
     });
 
     const { docId, slotDate, slotTime } = appointmentData;
-    const doctorData = await doctorModel.findById(docId);
+    const doctorData = await userModel.findById(docId);
     if (!doctorData) {
       return res
         .status(404)
@@ -295,14 +316,14 @@ exports.appointmentCancelAdmin = async (req, res) => {
 
 exports.adminDashboard = async (req, res) => {
   try {
-    const doctors = await doctorModel.find({});
-    const users = await userModel.find({});
+    const doctors = await userModel.find({ role: "doctor" });
+    const users = await userModel.find({ role: "user" });
     const appointments = await appointmentModel
       .find({})
       .populate("userId", "name profileImage email address phone")
       .populate(
         "docId",
-        "name email image degree specialty experience about available fees address"
+        "name email profileImage degree specialty experience about available fees address role"
       )
       .sort({ date: -1 }); // Sorting the appointments by date in descending order here
 

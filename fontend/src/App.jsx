@@ -48,6 +48,8 @@ import { AddTest } from "./components/dashboard/adminDashboard/AddTest";
 import { MyTestAppointment } from "./pages/myProfilePage/MyTestAppointment";
 import DoctorDashboard from "./components/dashboard/doctorDashboard/DoctorDashboard";
 import Appointment from "./components/dashboard/doctorDashboard/Appointment";
+import DoctorList from "./components/dashboard/doctorDashboard/DoctorList";
+import AllPatients from "./components/dashboard/doctorDashboard/AllPatients";
 
 const App = () => {
   return (
@@ -108,6 +110,8 @@ const App = () => {
             {/* Doctor Dashboard */}
             <Route path="doctorDashboard" element={<DoctorDashboard />} />
             <Route path="appointment" element={<Appointment />} />
+            <Route path="doctorList" element={<DoctorList />} />
+            <Route path="allPatient" element={<AllPatients />} />
           </Route>
         </Routes>
       </div>
