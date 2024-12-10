@@ -84,7 +84,7 @@ const App = () => {
           <Route path="/history" element={<PaymentHistory />} />
           <Route path="/success" element={<Success />} />
           <Route path="/cancel" element={<Cancel />} />
-          <Route path="/invoice/:appointmentId" element={<InvoiceList />} />
+          <Route path="/invoice" element={<InvoiceList />} />
 
           {/* Admin Dashboard */}
           <Route

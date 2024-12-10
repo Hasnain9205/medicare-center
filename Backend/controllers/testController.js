@@ -6,6 +6,7 @@ const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const fs = require("fs");
 const path = require("path");
 const { generateInvoice } = require("./generateInvoice");
+const invoiceDir = path.join(__dirname, "../invoices");
 
 // Create Test
 exports.createTest = async (req, res) => {
@@ -415,31 +416,23 @@ exports.paymentSuccess = async (req, res) => {
 
 //get invoice
 exports.getInvoice = async (req, res) => {
-  const { appointmentId } = req.params; // Get appointmentId from URL parameters
-  console.log("Appointment ID:", appointmentId); // Log to verify the ID
-
-  if (!appointmentId) {
-    return res.status(400).json({ error: "appointmentId is missing" });
-  }
-
   try {
-    const appointment = await testAppointmentModel
-      .findById(appointmentId)
-      .populate("userId"); // Populate user data if needed
-
-    // Check if the invoice is generated
-    if (!appointment || !appointment.invoiceGenerated) {
-      return res.status(404).json({ error: "Invoice not available." });
+    if (!fs.existsSync(invoiceDir)) {
+      return res.status(200).json({ invoices: [] });
     }
 
-    // Respond with appointment data including invoice
-    res.status(200).json({
-      success: true,
-      appointment,
+    const invoices = fs.readdirSync(invoiceDir).map((file) => {
+      const [_, appointmentId] = file.split("_");
+      return {
+        fileName: file,
+        appointmentId: appointmentId.replace(".pdf", ""),
+      };
     });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
+
+    res.status(200).json({ invoices });
+  } catch (error) {
+    console.error("Error fetching invoices:", error);
+    res.status(500).json({ error: "Failed to fetch invoices." });
   }
 };
 
@@ -447,27 +440,17 @@ exports.getInvoice = async (req, res) => {
 
 exports.downloadInvoice = async (req, res) => {
   const { appointmentId } = req.params;
+  const fileName = `invoice_${appointmentId}.pdf`;
+  const filePath = path.join(invoiceDir, fileName);
 
-  try {
-    const appointment = await testAppointmentModel
-      .findById(appointmentId)
-      .populate("userId");
-    if (!appointment || !appointment.invoiceGenerated) {
-      return res.status(404).json({ error: "Invoice not available." });
-    }
-
-    const invoicePath = path.resolve(
-      __dirname,
-      `./invoices/invoice_${appointment._id}.pdf`
-    );
-    if (!fs.existsSync(invoicePath)) {
-      return res.status(404).json({ error: "Invoice file not found." });
-    }
-
-    res.setHeader("Content-Type", "application/pdf");
-    res.download(invoicePath, `invoice_${appointment._id}.pdf`);
-  } catch (err) {
-    console.error("Error downloading invoice:", err);
-    res.status(500).json({ error: "Server error while downloading invoice." });
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: "Invoice not found." });
   }
+
+  res.download(filePath, fileName, (err) => {
+    if (err) {
+      console.error("Error during file download:", err);
+      res.status(500).send("Failed to download invoice.");
+    }
+  });
 };

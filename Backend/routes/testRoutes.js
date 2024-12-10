@@ -63,10 +63,6 @@ testRouter.get(
   authenticationRole(["user"]),
   downloadInvoice
 );
-testRouter.get(
-  "/invoice/:appointmentId",
-  authenticationRole(["user", "admin"]),
-  getInvoice
-);
+testRouter.get("/invoices", authenticationRole(["user", "admin"]), getInvoice);
 
 module.exports = testRouter;
