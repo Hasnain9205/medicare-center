@@ -1,10 +1,13 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import logo from "../../../src/assets/logo.png";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate, useParams } from "react-router-dom";
 import profile from "../../../src/assets/profile.jpg";
 import { AuthContext } from "../provider/AuthProvider";
 
 export default function Navbar() {
+  const { appointmentId } = useParams();
+  console.log("Appointment ID nav: ", appointmentId); // Check if this is populated
+
   const { user, logout } = useContext(AuthContext);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -272,11 +275,12 @@ export default function Navbar() {
                       >
                         My Test Appointments
                       </Link>
+
                       <Link
-                        to={`/invoices/${user.id}`}
+                        to={`/invoice/${appointmentId}`} // Using the appointmentId in the URL
                         className="block px-4 py-3 text-sm text-gray-600 capitalize transition-colors duration-300 transform dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-white"
                       >
-                        Test Invoices
+                        All Invoices
                       </Link>
                     </>
                   )}

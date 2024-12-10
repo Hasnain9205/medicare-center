@@ -17,7 +17,6 @@ import MyProfile from "./pages/myProfilePage/MyProfile";
 import UpdateProfile from "./pages/myProfilePage/UpdateProfile";
 import MyAppointments from "./pages/myProfilePage/MyAppointments";
 import MyAppointment from "./pages/appointments/MyAppointment";
-import MyTestInvoices from "./pages/myProfilePage/MyTestInvoices";
 import PaymentSuccess from "./pages/myProfilePage/PaymentSuccess";
 import TestPayment from "./pages/myProfilePage/TestPayment";
 
@@ -33,7 +32,6 @@ import CheckOutForm from "./components/payment/CheckOutForm";
 import PaymentHistory from "./components/payment/PaymentHistory";
 import Cancel from "./components/payment/Cancel";
 import Success from "./components/payment/Success";
-import CreateInvoice from "./components/Invoice/createInvoice";
 
 // Admin Dashboard
 import Dashboard from "./components/dashboard/Dashboard";
@@ -50,6 +48,7 @@ import DoctorDashboard from "./components/dashboard/doctorDashboard/DoctorDashbo
 import Appointment from "./components/dashboard/doctorDashboard/Appointment";
 import DoctorList from "./components/dashboard/doctorDashboard/DoctorList";
 import AllPatients from "./components/dashboard/doctorDashboard/AllPatients";
+import InvoiceList from "./components/Invoice/InvoiceList";
 
 const App = () => {
   return (
@@ -79,14 +78,13 @@ const App = () => {
           <Route path="/testAppointment" element={<MyTestAppointment />} />
           <Route path="/testPayment" element={<TestPayment />} />
           <Route path="/paymentSuccess" element={<PaymentSuccess />} />
-          <Route path="/invoices/:userId" element={<MyTestInvoices />} />
           <Route path="/appointments/:docId" element={<DocAppointment />} />
-          <Route path="/createInvoice" element={<CreateInvoice />} />
           <Route path="/payment" element={<Payment />} />
           <Route path="/confirm" element={<CheckOutForm />} />
           <Route path="/history" element={<PaymentHistory />} />
           <Route path="/success" element={<Success />} />
           <Route path="/cancel" element={<Cancel />} />
+          <Route path="/invoice/:appointmentId" element={<InvoiceList />} />
 
           {/* Admin Dashboard */}
           <Route

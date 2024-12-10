@@ -40,7 +40,9 @@ exports.getAllInvoices = async (req, res) => {
     const { userId } = req.query; // Pass userId as query parameter
     const filter = userId ? { user: userId } : {};
 
-    const invoices = await Invoice.find(filter).populate("tests.test");
+    const invoices = await Invoice.find(filter)
+      .populate("user", "name")
+      .populate("tests.test");
     res.status(200).json({ invoices });
   } catch (error) {
     console.error("Error fetching invoices:", error);

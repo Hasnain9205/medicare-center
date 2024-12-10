@@ -12,6 +12,8 @@ const {
   paymentSuccess,
   paymentHistory,
   updateTestAppointmentStatus,
+  downloadInvoice,
+  getInvoice,
 } = require("../controllers/testController");
 const upload = require("../middlewares/multer");
 
@@ -42,8 +44,29 @@ testRouter.patch(
 );
 testRouter.put("/update-test/:id", authenticationRole(["admin"]), updateTest);
 testRouter.post("/cancel/:id", authenticationRole(["user"]), cancelTest);
-testRouter.post("/create-payment-intent", payment);
-testRouter.post("/payment-success", paymentSuccess);
+testRouter.post(
+  "/create-payment-intent",
+  authenticationRole(["user"]),
+  payment
+);
+
 testRouter.post("/history", authenticationRole(["admin"]), paymentHistory);
+
+testRouter.post(
+  "/payment-success",
+  authenticationRole(["user"]),
+  paymentSuccess
+);
+
+testRouter.get(
+  "/download-invoice/:appointmentId",
+  authenticationRole(["user"]),
+  downloadInvoice
+);
+testRouter.get(
+  "/invoice/:appointmentId",
+  authenticationRole(["user", "admin"]),
+  getInvoice
+);
 
 module.exports = testRouter;

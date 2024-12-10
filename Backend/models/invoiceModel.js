@@ -21,10 +21,16 @@ const invoiceSchema = new mongoose.Schema(
       enum: ["unpaid", "paid"],
       default: "unpaid", // More descriptive payment status
     },
-    issuedAt: { type: Date, default: Date.now },
-    dueDate: { type: Date, required: true }, // Add a due date for payment
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now },
   },
-  { timestamps: true } // Automatic timestamps for createdAt and updatedAt
+  { timestamps: true }
 );
+
+// Automatically update `updatedAt` before saving
+invoiceSchema.pre("save", function (next) {
+  this.updatedAt = Date.now();
+  next();
+});
 
 module.exports = mongoose.model("Invoice", invoiceSchema);

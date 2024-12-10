@@ -3,6 +3,10 @@ const testModel = require("../models/testModel");
 const testAppointmentModel = require("../models/testAppointmentModel");
 const Stripe = require("stripe");
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+const fs = require("fs");
+const path = require("path");
+const { generateInvoice } = require("./generateInvoice");
+
 // Create Test
 exports.createTest = async (req, res) => {
   try {
@@ -283,31 +287,6 @@ exports.payment = async (req, res) => {
   }
 };
 
-exports.paymentSuccess = async (req, res) => {
-  const { appointmentIds, sessionId } = req.body;
-
-  try {
-    // Verify the session ID and retrieve payment intent details
-    const paymentIntent = await stripe.paymentIntents.retrieve(sessionId);
-
-    // Check the payment intent status
-    if (paymentIntent.status === "succeeded") {
-      // Update appointment status as paid in your database
-      await testAppointmentModel.updateMany(
-        { _id: { $in: appointmentIds } },
-        { $set: { status: "booked", paymentStatus: "paid" } }
-      );
-
-      res.status(200).send("Payment and appointment update successful");
-    } else {
-      res.status(400).send("Payment not successful");
-    }
-  } catch (error) {
-    console.error("Error confirming payment:", error);
-    res.status(500).send("Error processing payment");
-  }
-};
-
 exports.paymentHistory = async (req, res) => {
   const userId = req.user.id; // Assuming you're using JWT for authentication
 
@@ -338,5 +317,157 @@ exports.paymentHistory = async (req, res) => {
   } catch (error) {
     console.error("Error fetching payment history:", error);
     res.status(500).json({ message: "Error fetching payment history" });
+  }
+};
+
+exports.paymentSuccess = async (req, res) => {
+  const { appointmentIds, sessionId } = req.body;
+
+  if (!appointmentIds || !sessionId) {
+    return res.status(400).json({
+      message: "Missing required fields: appointmentIds or sessionId",
+    });
+  }
+
+  try {
+    const paymentIntent = await stripe.paymentIntents.retrieve(sessionId);
+
+    if (paymentIntent.status === "succeeded") {
+      // Update appointment status in the database
+      try {
+        await testAppointmentModel.updateMany(
+          { _id: { $in: appointmentIds } },
+          {
+            $set: {
+              status: "booked",
+              paymentStatus: "paid",
+              invoiceGenerated: true,
+            },
+          }
+        );
+      } catch (dbError) {
+        console.error("Error updating appointments:", dbError);
+        return res
+          .status(500)
+          .json({ message: "Failed to update appointment statuses" });
+      }
+
+      // Fetch updated appointments
+      const appointments = await testAppointmentModel
+        .find({ _id: { $in: appointmentIds } })
+        .populate({
+          path: "userId",
+          select: "name email address phone gender",
+        })
+        .populate({
+          path: "testId",
+          select: "name price category description",
+        });
+
+      if (appointments.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "No appointments found to update" });
+      }
+
+      const invoicePaths = [];
+      const failedInvoices = [];
+
+      for (const appointment of appointments) {
+        try {
+          const invoicePath = await generateInvoice(appointment);
+          invoicePaths.push(invoicePath);
+        } catch (invoiceError) {
+          console.error(
+            "Error generating invoice for appointment:",
+            appointment._id,
+            invoiceError
+          );
+          failedInvoices.push({
+            appointmentId: appointment._id,
+            error: invoiceError.message || "Unknown error",
+          });
+        }
+      }
+
+      return res.status(200).json({
+        message: "Payment successful, appointments updated.",
+        invoicePaths,
+        failedInvoices,
+      });
+    } else {
+      return res.status(400).json({ message: "Payment was not successful" });
+    }
+  } catch (error) {
+    console.error("Error confirming payment:", error);
+
+    if (error.type === "StripeCardError") {
+      return res.status(400).json({ message: "Card payment failed" });
+    } else if (error.type === "StripeInvalidRequestError") {
+      return res.status(400).json({ message: "Invalid payment request" });
+    } else {
+      return res
+        .status(500)
+        .json({ message: "Internal server error, please try again later" });
+    }
+  }
+};
+
+//get invoice
+exports.getInvoice = async (req, res) => {
+  const { appointmentId } = req.params; // Get appointmentId from URL parameters
+  console.log("Appointment ID:", appointmentId); // Log to verify the ID
+
+  if (!appointmentId) {
+    return res.status(400).json({ error: "appointmentId is missing" });
+  }
+
+  try {
+    const appointment = await testAppointmentModel
+      .findById(appointmentId)
+      .populate("userId"); // Populate user data if needed
+
+    // Check if the invoice is generated
+    if (!appointment || !appointment.invoiceGenerated) {
+      return res.status(404).json({ error: "Invoice not available." });
+    }
+
+    // Respond with appointment data including invoice
+    res.status(200).json({
+      success: true,
+      appointment,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+//download invoice
+
+exports.downloadInvoice = async (req, res) => {
+  const { appointmentId } = req.params;
+
+  try {
+    const appointment = await testAppointmentModel
+      .findById(appointmentId)
+      .populate("userId");
+    if (!appointment || !appointment.invoiceGenerated) {
+      return res.status(404).json({ error: "Invoice not available." });
+    }
+
+    const invoicePath = path.resolve(
+      __dirname,
+      `./invoices/invoice_${appointment._id}.pdf`
+    );
+    if (!fs.existsSync(invoicePath)) {
+      return res.status(404).json({ error: "Invoice file not found." });
+    }
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.download(invoicePath, `invoice_${appointment._id}.pdf`);
+  } catch (err) {
+    console.error("Error downloading invoice:", err);
+    res.status(500).json({ error: "Server error while downloading invoice." });
   }
 };

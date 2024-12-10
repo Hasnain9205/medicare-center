@@ -30,6 +30,7 @@ const testAppointmentModel = new mongoose.Schema(
       enum: ["pending", "booked", "completed", "cancelled"],
       default: "pending",
     },
+    invoiceGenerated: { type: Boolean, default: false },
     paymentIntentId: {
       type: String,
     },

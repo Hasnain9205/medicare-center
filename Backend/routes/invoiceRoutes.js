@@ -21,11 +21,7 @@ invoiceRouter.get(
   authenticationRole(["admin", "user"]),
   getInvoiceByUserId
 );
-invoiceRouter.get(
-  "/all-invoice",
-  authenticationRole(["admin"]),
-  getAllInvoices
-);
+invoiceRouter.get("/all-invoice", authenticationRole(["user"]), getAllInvoices);
 
 invoiceRouter.put(
   "/update-invoice/:invoiceId",
