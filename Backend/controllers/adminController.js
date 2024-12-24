@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const validator = require("validator");
 const appointmentModel = require("../models/appointmentModel");
 const userModel = require("../models/userModel");
+const testAppointmentModel = require("../models/testAppointmentModel");
 
 // Add doctor API
 exports.addDoctor = async (req, res) => {
@@ -150,9 +151,10 @@ exports.getDoctor = async (req, res) => {
   }
 };
 
+//update doctor api
 exports.updateDoctor = async (req, res) => {
   try {
-    const doctorId = req.params.id; // Get doctor ID from the URL parameter
+    const doctorId = req.params.id;
     const {
       name,
       email,
@@ -167,23 +169,18 @@ exports.updateDoctor = async (req, res) => {
       available,
     } = req.body;
 
-    // Validate required fields
     if (!doctorId) {
       return res.status(400).json({ message: "Doctor ID is required" });
     }
 
-    // Find the doctor by ID
     const doctor = await userModel.findById(doctorId);
     if (!doctor) {
       return res.status(404).json({ message: "Doctor not found" });
     }
-
-    // If password is provided, hash it
     if (password) {
       doctor.password = await bcrypt.hash(password, 10);
     }
 
-    // Update doctor details
     doctor.name = name || doctor.name;
     doctor.email = email || doctor.email;
     doctor.image = image || doctor.image;
@@ -195,10 +192,7 @@ exports.updateDoctor = async (req, res) => {
     doctor.address = address || doctor.address;
     doctor.available = available !== undefined ? available : doctor.available;
 
-    // Save the updated doctor
     const updatedDoctor = await doctor.save();
-
-    // Return the updated doctor details
     res.status(200).json({
       message: "Doctor updated successfully",
       doctor: updatedDoctor,
@@ -216,13 +210,11 @@ exports.deleteDoctor = async (req, res) => {
     const associatedAppointments = await appointmentModel.find({
       docId: doctorId,
     });
-    if (associatedAppointments) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          msg: "Cannot delete doctor with existing appointments",
-        });
+    if (associatedAppointments.length > 0) {
+      return res.status(400).json({
+        success: false,
+        msg: "Cannot delete doctor with existing appointments",
+      });
     }
     const doctor = await userModel.findByIdAndDelete(doctorId);
     if (!doctor) {
@@ -239,11 +231,32 @@ exports.deleteDoctor = async (req, res) => {
   }
 };
 
+//get testAPpointment
+
+exports.getTestAppointment = async (req, res) => {
+  try {
+    const testAppointments = await testAppointmentModel
+      .find({})
+      .populate("testId", "name category image")
+      .populate("userId", "name email profileImage phone");
+    res.status(200).json({
+      success: true,
+      msg: "Get all Test appointment successfully",
+      testAppointments,
+    });
+  } catch (error) {
+    console.error("Error deleting doctor:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
 //all appointment list
 
 exports.appointmentsAdmin = async (req, res) => {
   try {
-    const appointments = await appointmentModel.find({});
+    const appointments = await appointmentModel
+      .find({})
+      .populate("userId", "name email phone profileImage");
     return res
       .status(200)
       .json({ msg: "All appointment get successfully", appointments });
@@ -318,6 +331,7 @@ exports.adminDashboard = async (req, res) => {
   try {
     const doctors = await userModel.find({ role: "doctor" });
     const users = await userModel.find({ role: "user" });
+    const testAppointment = await testAppointmentModel.find({});
     const appointments = await appointmentModel
       .find({})
       .populate("userId", "name profileImage email address phone")
@@ -331,12 +345,14 @@ exports.adminDashboard = async (req, res) => {
       doctors: doctors.length,
       appointments: appointments.length,
       patients: users.length,
-      latestAppointments: appointments.slice(0, 5), // Get only the latest 5 appointments
+      testAppointments: testAppointment.length,
+      latestAppointments: appointments.slice(0, 5),
+      doctorAppointments: appointments,
     };
 
     return res
       .status(200)
-      .json({ msg: "All data fetched successfully", dashData });
+      .json({ msg: "All data fetched successfully", dashData, appointments });
   } catch (error) {
     console.error("Error fetching data:", error); // Log the error for debugging
     return res.status(500).json({ message: error.message });

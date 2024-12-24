@@ -55,7 +55,7 @@ export const AuthProvider = (props) => {
       const { data } = await axiosInstance.get("/users/profile", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log("User profile fetched:", data); // Debugging
+      console.log("User profile fetched:", data.user); // Debugging
       setUser(data.user);
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -63,12 +63,11 @@ export const AuthProvider = (props) => {
       if (error.response?.status === 401 || error.response?.status === 403) {
         console.log("Token is expired, attempting to refresh.");
 
-        // If the access token is expired, try to refresh it using the refresh token
         const refreshToken = getRefreshToken();
         console.log(
           "Using refresh token to refresh access token:",
           refreshToken
-        ); // Debugging
+        );
 
         if (refreshToken) {
           try {

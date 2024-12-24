@@ -3,7 +3,6 @@ import {
   getAccessToken,
   getRefreshToken,
   removeAccessToken,
-  removeRefreshToken,
 } from "../../Utils";
 
 const useAxios = axios.create({

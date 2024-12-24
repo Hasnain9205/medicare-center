@@ -86,34 +86,56 @@ exports.getAllTest = async (req, res) => {
 
 // Update Test
 exports.updateTest = async (req, res) => {
+  const { id } = req.params;
+  const { name, category, price, description } = req.body;
+
+  // Input validation
+  if (!name || !category || price <= 0 || !description) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid input data" });
+  }
+
   try {
-    const { name, category, price, description } = req.body;
-
-    const updates = { name, category, price, description };
-
-    if (req.file) {
-      updates.image = req.file.path;
-    }
-
     const updatedTest = await testModel.findByIdAndUpdate(
-      req.params.testId,
-      updates,
-      {
-        new: true,
-      }
+      id,
+      { name, category, price, description },
+      { new: true, runValidators: true }
     );
 
     if (!updatedTest) {
-      return res.status(404).json({ message: "Test not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Test not found" });
+    }
+
+    res.status(200).json({ success: true, test: updatedTest });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to update test", error });
+  }
+};
+
+exports.deleteTest = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deletedTest = await testModel.findByIdAndDelete(id);
+
+    if (!deletedTest) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Test not found" });
     }
 
     res
       .status(200)
-      .json({ message: "Test updated successfully", test: updatedTest });
+      .json({ success: true, message: "Test deleted successfully" });
   } catch (error) {
     res
       .status(500)
-      .json({ message: "Error updating test", error: error.message });
+      .json({ success: false, message: "Failed to delete test", error });
   }
 };
 
@@ -211,49 +233,50 @@ exports.bookTest = async (req, res) => {
 //Get test appointment
 exports.getTestAppointment = async (req, res) => {
   try {
+    if (!req.user || !req.user.id) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User not authenticated." });
+    }
+
+    const userId = req.user.id;
     const testAppointments = await testAppointmentModel
-      .find({})
-      .populate("testId", "name price category");
+      .find({ userId })
+      .populate("testId", "name price category")
+      .sort({ createdAt: -1 });
 
-    // Log to check if data is fetched correctly
-    console.log(testAppointments);
-
-    return res
-      .status(200)
-      .json({ msg: "All appointment get successfully", testAppointments });
+    return res.status(200).json({
+      success: true,
+      message: "All appointments retrieved successfully.",
+      testAppointments,
+    });
   } catch (error) {
     console.error(error);
-    return res.json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
 exports.updateTestAppointmentStatus = async (req, res) => {
   try {
-    const { id } = req.params; // Appointment ID
-    const { status } = req.body; // New status
+    const { id } = req.params;
+    const { status } = req.body;
+    const updatedAppointment = await testAppointmentModel.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    );
 
-    const validStatuses = ["pending", "booked", "completed", "cancelled"];
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({ message: "Invalid status provided" });
-    }
-
-    const appointment = await testAppointmentModel.findById(id);
-    if (!appointment) {
+    if (!updatedAppointment) {
       return res.status(404).json({ message: "Appointment not found" });
     }
 
-    appointment.status = status;
-    await appointment.save();
-
     res.status(200).json({
-      message: `Appointment status updated to ${status}`,
-      appointment,
+      message: "Appointment status updated successfully",
+      updatedAppointment,
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Error updating appointment status",
-      error: error.message,
-    });
+    console.error("Error updating appointment status:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
