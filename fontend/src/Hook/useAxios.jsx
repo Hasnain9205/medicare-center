@@ -7,7 +7,7 @@ import {
 } from "../../Utils"; // Utility functions
 
 const useAxios = axios.create({
-  baseURL: "http://localhost:5001/api", // API base URL, can be set in .env file
+  baseURL: "http://localhost:5001/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -40,34 +40,32 @@ useAxios.interceptors.response.use(
     ) {
       originalRequest._retry = true;
       try {
-        const refreshToken = getRefreshToken(); // Retrieve refresh token
+        const refreshToken = getRefreshToken();
         const res = await axios.post(`http://localhost:5001/api/refreshToken`, {
           token: refreshToken,
         });
         const newAccessToken = res.data.accessToken;
 
-        setAccessToken(newAccessToken); // Save the new access token
+        setAccessToken(newAccessToken);
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-        return useAxios(originalRequest); // Retry the original request with new token
+        return useAxios(originalRequest);
       } catch (err) {
-        removeAccessToken(); // Failed to refresh token, log out
-        window.location.href = "/login"; // Redirect to login
+        removeAccessToken();
+        window.location.href = "/login";
         return Promise.reject(err);
       }
     }
 
-    // Retry logic for 503 - Service Unavailable (temporary server issue)
     if (
       error.response &&
       error.response.status === 503 &&
       !originalRequest._retry
     ) {
       originalRequest._retry = true;
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second
-      return useAxios(originalRequest); // Retry the request
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      return useAxios(originalRequest);
     }
 
-    // Log error response for debugging purposes
     if (error.response) {
       console.error("Error Response:", error.response);
     } else if (error.request) {
@@ -76,7 +74,7 @@ useAxios.interceptors.response.use(
       console.error("Error Message:", error.message);
     }
 
-    return Promise.reject(error); // Reject the error
+    return Promise.reject(error);
   }
 );
 

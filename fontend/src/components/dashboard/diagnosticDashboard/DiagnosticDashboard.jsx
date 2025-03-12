@@ -14,32 +14,36 @@ export const DiagnosticDashboard = () => {
   const navigate = useNavigate();
 
   const setupCharts = (data) => {
-    // Total Revenue Chart
-    const ctxRevenue = document
+    const revenueCtx = document
       .getElementById("revenueChart")
       ?.getContext("2d");
-    if (ctxRevenue) {
-      new Chart(ctxRevenue, {
+    const costCtx = document.getElementById("costChart")?.getContext("2d");
+    const appointmentsCtx = document
+      .getElementById("appointmentsChart")
+      ?.getContext("2d");
+    const countsCtx = document.getElementById("countsChart")?.getContext("2d");
+
+    if (revenueCtx) {
+      new Chart(revenueCtx, {
         type: "bar",
         data: {
-          labels: ["Revenue"],
+          labels: ["Revenue", "Cost"],
           datasets: [
             {
-              label: "Total Revenue",
-              data: [data.totalRevenue],
-              backgroundColor: "rgba(75, 192, 192, 0.6)",
+              label: "Amount ($)",
+              data: [data.totalRevenue, data.totalCost],
+              backgroundColor: [
+                "rgba(75, 192, 192, 0.6)",
+                "rgba(255, 99, 132, 0.6)",
+              ],
             },
           ],
         },
       });
     }
 
-    // Appointments Chart
-    const ctxAppointments = document
-      .getElementById("appointmentsChart")
-      ?.getContext("2d");
-    if (ctxAppointments) {
-      new Chart(ctxAppointments, {
+    if (appointmentsCtx) {
+      new Chart(appointmentsCtx, {
         type: "doughnut",
         data: {
           labels: ["Test Appointments", "Doctor Appointments"],
@@ -49,7 +53,7 @@ export const DiagnosticDashboard = () => {
               data: [data.totalTestAppointments, data.totalDoctorAppointments],
               backgroundColor: [
                 "rgba(54, 162, 235, 0.6)",
-                "rgba(255, 99, 132, 0.6)",
+                "rgba(255, 159, 64, 0.6)",
               ],
             },
           ],
@@ -57,20 +61,19 @@ export const DiagnosticDashboard = () => {
       });
     }
 
-    // Counts Chart
-    const ctxCounts = document.getElementById("countsChart")?.getContext("2d");
-    if (ctxCounts) {
-      new Chart(ctxCounts, {
+    if (countsCtx) {
+      new Chart(countsCtx, {
         type: "pie",
         data: {
-          labels: ["Doctors", "Tests"],
+          labels: ["Doctors", "Tests", "Employees"],
           datasets: [
             {
               label: "Counts",
-              data: [data.doctorCount, data.testCount],
+              data: [data.doctorCount, data.testCount, data.totalEmployees],
               backgroundColor: [
                 "rgba(153, 102, 255, 0.6)",
                 "rgba(255, 159, 64, 0.6)",
+                "rgba(75, 192, 192, 0.6)",
               ],
             },
           ],
@@ -134,60 +137,58 @@ export const DiagnosticDashboard = () => {
     );
   }
 
-  if (!dashboardData) {
-    return (
-      <div className="flex justify-center items-center h-screen bg-gray-100">
-        <div className="text-xl font-semibold text-red-500">No Data Found</div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="container mx-auto bg-white rounded-lg shadow-lg p-6">
+    <div className="min-h-screen bg-gray-100 lg:p-6">
+      <div className="container lg:mx-auto bg-white rounded-lg shadow-lg p-2">
         <h1 className="text-2xl font-bold text-gray-800 text-center mb-4">
           Diagnostic Dashboard
         </h1>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <div className="p-4 bg-blue-100 text-blue-700 rounded-lg shadow">
-            <p className="text-lg font-semibold">Total Test Revenue</p>
-            <h2 className="text-2xl font-bold">
-              ${dashboardData.totalRevenue}
-            </h2>
-          </div>
-          <div className="p-4 bg-green-100 text-green-700 rounded-lg shadow">
-            <p className="text-lg font-semibold">Doctors Count</p>
-            <h2 className="text-2xl font-bold">{dashboardData.doctorCount}</h2>
-          </div>
-          <div className="p-4 bg-yellow-100 text-yellow-700 rounded-lg shadow">
-            <p className="text-lg font-semibold">Tests Count</p>
-            <h2 className="text-2xl font-bold">{dashboardData.testCount}</h2>
-          </div>
-          <div className="p-4 bg-purple-100 text-purple-700 rounded-lg shadow">
-            <p className="text-lg font-semibold">Test Appointments</p>
-            <h2 className="text-2xl font-bold">
-              {dashboardData.totalTestAppointments}
-            </h2>
-          </div>
-          <div className="p-4 bg-red-100 text-red-700 rounded-lg shadow">
-            <p className="text-lg font-semibold">Doctor Appointments</p>
-            <h2 className="text-2xl font-bold">
-              {dashboardData.totalDoctorAppointments}
-            </h2>
-          </div>
+          <DashboardCard
+            title="Total Revenue"
+            value={`$${dashboardData.totalRevenue}`}
+            color="blue"
+          />
+          <DashboardCard
+            title="Total Cost"
+            value={`$${dashboardData.totalCost}`}
+            color="red"
+          />
+          <DashboardCard
+            title="Test Appointments"
+            value={dashboardData.totalTestAppointments}
+            color="yellow"
+          />
+          <DashboardCard
+            title="Doctor Appointments"
+            value={dashboardData.totalDoctorAppointments}
+            color="purple"
+          />
+          <DashboardCard
+            title="Total Employees"
+            value={dashboardData.employeeCount}
+            color="green"
+          />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="bg-white shadow-lg rounded-lg p-4">
-            <canvas id="revenueChart"></canvas>
-          </div>
-          <div className="bg-white shadow-lg rounded-lg p-4">
-            <canvas id="appointmentsChart"></canvas>
-          </div>
-          <div className="bg-white shadow-lg rounded-lg p-4">
-            <canvas id="countsChart"></canvas>
-          </div>
+          <ChartContainer id="revenueChart" />
+          <ChartContainer id="appointmentsChart" />
+          <ChartContainer id="countsChart" />
         </div>
       </div>
     </div>
   );
 };
+
+const DashboardCard = ({ title, value, color }) => (
+  <div className={`p-4 bg-${color}-100 text-${color}-700 rounded-lg shadow`}>
+    <p className="text-lg font-semibold">{title}</p>
+    <h2 className="text-2xl font-bold">{value}</h2>
+  </div>
+);
+
+const ChartContainer = ({ id }) => (
+  <div className="bg-white shadow-lg rounded-lg p-4">
+    <canvas id={id}></canvas>
+  </div>
+);

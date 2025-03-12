@@ -16,6 +16,7 @@
     "@stripe/react-stripe-js": "^2.9.0",
     "@stripe/stripe-js": "^4.10.0",
     "algoliasearch": "^4.24.0",
+    "aos": "^2.3.4",
     "axios": "^1.7.7",
     "chart.js": "^4.4.7",
     "daisyui": "^4.12.22",

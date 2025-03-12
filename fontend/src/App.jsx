@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Route, Routes } from "react-router-dom";
 import Navbar from "./components/navbar/Navbar";
 import Footer from "./pages/Footer/Footer";
@@ -60,14 +60,21 @@ import GetDoctor from "./components/dashboard/diagnosticDashboard/GetDoctor";
 import TestAppointmentForDiagnostic from "./components/dashboard/diagnosticDashboard/TestAppointmentForDiagnostic";
 import MyPrescriptions from "./components/Prescriptions/MyPrescriptions";
 import PrescriptionDetail from "./components/Prescriptions/PrescriptionDetail";
+import Aos from "aos";
+import "aos/dist/aos.css";
+import CreateEmployee from "./components/dashboard/diagnosticDashboard/CreateEmployee";
+import EmployeeDashboard from "./components/dashboard/employeeDashboard/EmployeeDashboard";
 
 const App = () => {
+  useEffect(() => {
+    Aos.init();
+  }, []);
   return (
     <div>
-      <div className="mx-44">
+      <div className="lg:mx-40">
         <Navbar />
       </div>
-      <div className="mx-20 sm:mx-[10%]">
+      <div className="lg:mx-40 lg:px-4">
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Home />} />
@@ -159,6 +166,10 @@ const App = () => {
               element={<TestAppointmentForDiagnostic />}
             />
           </Route>
+          <Route path="createEmployee" element={<CreateEmployee />} />
+
+          {/* Employees Dashboard */}
+          <Route path="employeeDashboard" element={<EmployeeDashboard />} />
         </Routes>
       </div>
       <Footer />
